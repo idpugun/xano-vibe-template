@@ -53,6 +53,11 @@ export const DashboardPage: React.FC = () => {
     fetchCards();
   }, []);
 
+  // Reset selected cards when reading mode changes
+  useEffect(() => {
+    setSelectedCards(new Set());
+  }, [readingMode]);
+
   // Handle reading submission
   const handleSubmitReading = async () => {
     if (!user || !isSelectionValid()) return;

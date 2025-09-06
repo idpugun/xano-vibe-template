@@ -128,6 +128,12 @@ export const TarotCardSection: React.FC<TarotCardSectionProps> = ({
 
   const selectionLimit = getSelectionLimit();
 
+  // Reset flipped cards and preview when reading mode changes
+  useEffect(() => {
+    setFlippedCards(new Set());
+    setPreviewCard(null);
+  }, [readingMode]);
+
   // Fetch tarot cards data from API
   useEffect(() => {
     const fetchCards = async () => {
