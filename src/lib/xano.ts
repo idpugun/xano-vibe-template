@@ -440,14 +440,31 @@ export const realtimeService = {
 // Tarot reading service
 export const tarotService = {
   async submitReading(readingData: {
-    user_id: number;
+    user: User;
     reading_mode: "single" | "three" | "celtic";
     selected_cards: number[];
     card_data: any[];
     reading_timestamp: number;
   }): Promise<any> {
     try {
-      const response = await xano.post("/tarot/readings", readingData);
+      // Format the userPrompt with user data and card data
+      const userPrompt = `Here is the user data and the drawn tarot card:
+
+User:
+${JSON.stringify(readingData.user)}
+
+Drawn Card:
+${JSON.stringify(readingData.card_data)}
+
+Please give a tarot reading for pas using this information. 
+Explain what this card might mean for them right now and provide thoughtful advice they can take away from the reading.`;
+
+      // Send the new payload structure to tarot/read endpoint
+      const payload = {
+        userPrompt: userPrompt,
+      };
+
+      const response = await xano.post("/auth/tarot/read", payload);
       const responseBody = response.getBody();
       return responseBody;
     } catch (error: any) {

@@ -73,7 +73,7 @@ export const DashboardPage: React.FC = () => {
 
       // Prepare reading data
       const readingData = {
-        user_id: user.id,
+        user,
         reading_mode: readingMode,
         selected_cards: Array.from(selectedCards),
         card_data: selectedCardData,
