@@ -437,5 +437,64 @@ export const realtimeService = {
   },
 };
 
+// Tarot reading service
+export const tarotService = {
+  async submitReading(readingData: {
+    user_id: number;
+    reading_mode: "single" | "three" | "celtic";
+    selected_cards: number[];
+    card_data: any[];
+    reading_timestamp: number;
+  }): Promise<any> {
+    try {
+      const response = await xano.post("/tarot/readings", readingData);
+      const responseBody = response.getBody();
+      return responseBody;
+    } catch (error: any) {
+      console.error("Submit reading error:", error);
+
+      // Handle Xano SDK errors properly
+      if (error.getResponse) {
+        const errorResponse = error.getResponse();
+        const errorBody = errorResponse.getBody();
+        console.error("Error response body:", errorBody);
+        console.error("Error status code:", errorResponse.getStatusCode());
+
+        // Throw a more user-friendly error message
+        throw new Error(
+          errorBody.message || error.message || "Failed to submit reading"
+        );
+      }
+
+      throw error;
+    }
+  },
+
+  async getReadingHistory(userId: number): Promise<any[]> {
+    try {
+      const response = await xano.get(`/tarot/readings?user_id=${userId}`);
+      const responseBody = response.getBody();
+      return responseBody;
+    } catch (error: any) {
+      console.error("Get reading history error:", error);
+
+      // Handle Xano SDK errors properly
+      if (error.getResponse) {
+        const errorResponse = error.getResponse();
+        const errorBody = errorResponse.getBody();
+        console.error("Error response body:", errorBody);
+        console.error("Error status code:", errorResponse.getStatusCode());
+
+        // Throw a more user-friendly error message
+        throw new Error(
+          errorBody.message || error.message || "Failed to get reading history"
+        );
+      }
+
+      throw error;
+    }
+  },
+};
+
 // Export configuration for debugging
 export const xanoConfig = XANO_CONFIG;

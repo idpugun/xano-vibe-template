@@ -4,25 +4,105 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/contexts/AuthContext';
-import { realtimeService, authService } from '@/lib/xano';
+import { realtimeService, authService, tarotService } from '@/lib/xano';
 import { LogOut, User, Activity, Database, Menu, X, Eye, History, Settings } from 'lucide-react';
 import { TarotCardSection } from '@/components/TarotCardSection';
 import { BackToLanding } from '@/components/BackToLanding';
 import { ReadingModeSelector, type ReadingMode } from '@/components/ReadingModeSelector';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export const DashboardPage: React.FC = () => {
   const { user, logout, isLoading } = useAuth();
+  const navigate = useNavigate();
   const [realtimeConnected, setRealtimeConnected] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [realtimeLoading, setRealtimeLoading] = useState(false);
   const [readingMode, setReadingMode] = useState<ReadingMode>('single');
   const [selectedCards, setSelectedCards] = useState<Set<number>>(new Set());
+  const [isSubmittingReading, setIsSubmittingReading] = useState(false);
+  const [cardsData, setCardsData] = useState<Array<{
+    id: number;
+    name: string;
+    fortune_telling: string[];
+    keyword: string[];
+    light_meaning: string[];
+    shadow_meaning: string[];
+    img_url: string;
+  }>>([]);
 
   // Function to check if selection matches reading mode requirement
   const isSelectionValid = () => {
     const requiredCards = readingMode === 'single' ? 1 : readingMode === 'three' ? 3 : 10;
     return selectedCards.size === requiredCards;
+  };
+
+  // Fetch tarot cards data
+  useEffect(() => {
+    const fetchCards = async () => {
+      try {
+        const response = await fetch('https://xi5k-kqun-rjxc.n7e.xano.io/api:bhawqcMo/TarotCard');
+        if (response.ok) {
+          const data = await response.json();
+          setCardsData(data);
+        }
+      } catch (error) {
+        console.error('Error fetching cards:', error);
+      }
+    };
+
+    fetchCards();
+  }, []);
+
+  // Handle reading submission
+  const handleSubmitReading = async () => {
+    if (!user || !isSelectionValid()) return;
+
+    try {
+      setIsSubmittingReading(true);
+      
+      // Get selected card data
+      const selectedCardData = Array.from(selectedCards).map(cardId => {
+        const card = cardsData.find(c => c.id === cardId);
+        return card || { id: cardId, name: `Card ${cardId + 1}` };
+      });
+
+      // Prepare reading data
+      const readingData = {
+        user_id: user.id,
+        reading_mode: readingMode,
+        selected_cards: Array.from(selectedCards),
+        card_data: selectedCardData,
+        reading_timestamp: Date.now()
+      };
+
+      // Submit to API
+      const result = await tarotService.submitReading(readingData);
+      
+      toast.success('การทำนายถูกบันทึกเรียบร้อยแล้ว!', {
+        icon: '🔮',
+        duration: 3000,
+      });
+
+      // Navigate to results page with the reading data
+      navigate('/cards', { 
+        state: { 
+          readingResult: {
+            ...result,
+            card_data: selectedCardData,
+            reading_timestamp: readingData.reading_timestamp
+          }
+        } 
+      });
+      
+    } catch (error) {
+      console.error('Error submitting reading:', error);
+      toast.error('เกิดข้อผิดพลาดในการบันทึกการทำนาย', {
+        icon: '❌',
+        duration: 4000,
+      });
+    } finally {
+      setIsSubmittingReading(false);
+    }
   };
 
   // Refs to store subscription and interval for cleanup
@@ -310,17 +390,27 @@ export const DashboardPage: React.FC = () => {
           <div className="flex gap-6">
             <Button 
               size="lg" 
-              disabled={!isSelectionValid()}
+              disabled={!isSelectionValid() || isSubmittingReading}
+              onClick={handleSubmitReading}
               className={`px-8 py-4 text-lg transition-all duration-300 ${
-                isSelectionValid() 
+                isSelectionValid() && !isSubmittingReading
                   ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700' 
                   : 'bg-muted text-muted-foreground cursor-not-allowed'
               }`}
             >
-              <Eye className="mr-2 h-5 w-5" />
-              {readingMode === 'single' && 'ดูดวงใบเดียว'}
-              {readingMode === 'three' && 'ดูดวง 3 ใบ'}
-              {readingMode === 'celtic' && 'ดูดวง Celtic Cross'}
+              {isSubmittingReading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
+                  กำลังบันทึก...
+                </>
+              ) : (
+                <>
+                  <Eye className="mr-2 h-5 w-5" />
+                  {readingMode === 'single' && 'ดูดวงใบเดียว'}
+                  {readingMode === 'three' && 'ดูดวง 3 ใบ'}
+                  {readingMode === 'celtic' && 'ดูดวง Celtic Cross'}
+                </>
+              )}
             </Button>
             <Button 
               size="lg" 
