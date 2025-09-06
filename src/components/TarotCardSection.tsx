@@ -97,6 +97,7 @@ export const TarotCardSection: React.FC = () => {
   const [cardsData, setCardsData] = useState<TarotCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [previewCard, setPreviewCard] = useState<TarotCardData | null>(null);
 
   // Fetch tarot cards data from API
   useEffect(() => {
@@ -124,14 +125,20 @@ export const TarotCardSection: React.FC = () => {
   }, []);
 
   const handleCardClick = (cardId: number) => {
+    // Find the card data
+    const allCards = [...row1Cards, ...row2Cards, ...row3Cards];
+    const cardData = allCards.find(card => card.id === cardId)?.cardData;
+    
     // If clicking the same card, flip it
     if (selectedCard === cardId) {
       setFlippedCards(prev => {
         const newSet = new Set(prev);
         if (newSet.has(cardId)) {
           newSet.delete(cardId);
+          setPreviewCard(null); // Hide preview when flipping back
         } else {
           newSet.add(cardId);
+          setPreviewCard(cardData || null); // Show preview when flipping
         }
         return newSet;
       });
@@ -139,6 +146,7 @@ export const TarotCardSection: React.FC = () => {
       // Select new card and flip it
       setSelectedCard(cardId);
       setFlippedCards(new Set([cardId]));
+      setPreviewCard(cardData || null); // Show preview for new card
     }
   };
 
@@ -199,7 +207,7 @@ export const TarotCardSection: React.FC = () => {
 
   return (
     <div className="w-full py-8">
-      <div className="max-w-[800px] mx-auto px-4">
+      <div className="max-w-[1200px] mx-auto px-4">
         <h2 className="text-3xl font-bold text-center mb-8 text-foreground">
           ไพ่ทาโรต์แห่งดวงชะตา
         </h2>
@@ -207,51 +215,134 @@ export const TarotCardSection: React.FC = () => {
           คลิกที่ไพ่เพื่อเปิดดูคำทำนาย (คลิกได้ครั้งละ 1 ใบ)
         </p>
         
-        {/* Row 1 */}
-        <div className="flex justify-center mb-4">
-          <div className="flex -space-x-2 sm:-space-x-3 md:-space-x-4 min-w-max">
-            {row1Cards.map((card) => (
-              <TarotCard
+        <div className="flex gap-8">
+          {/* Card Layout */}
+          <div className="flex-1">
+        
+        {/* Scattered Card Layout - No Overlap */}
+        <div className="relative w-full h-[600px] sm:h-[700px] md:h-[800px] mb-8">
+          {/* All cards scattered with no overlap */}
+          {[...row1Cards, ...row2Cards, ...row3Cards].map((card, index) => {
+            // Generate grid-based positions with slight offsets to avoid overlap
+            const gridSize = 8; // 8x8 grid
+            const gridX = index % gridSize;
+            const gridY = Math.floor(index / gridSize);
+            
+            // Base position in grid
+            const baseX = (gridX / (gridSize - 1)) * 80 + 10; // 10-90% range
+            const baseY = (gridY / (gridSize - 1)) * 80 + 10; // 10-90% range
+            
+            // Add slight random offset to break grid pattern
+            const seed = card.id * 1.618;
+            const offsetX = (Math.sin(seed) * 8) + (Math.cos(seed * 1.3) * 4); // ±12px offset
+            const offsetY = (Math.cos(seed * 1.7) * 8) + (Math.sin(seed * 2.1) * 4); // ±12px offset
+            
+            const x = Math.max(5, Math.min(95, baseX + offsetX)); // Clamp to 5-95%
+            const y = Math.max(5, Math.min(95, baseY + offsetY)); // Clamp to 5-95%
+            
+            // Gentle rotation for natural look
+            const rotation = (Math.sin(seed * 2.1) * 15) + (Math.cos(seed * 1.7) * 8); // ±23 degrees
+            
+            return (
+              <div
                 key={card.id}
-                id={card.id}
-                isFlipped={flippedCards.has(card.id)}
-                isSelected={selectedCard === card.id}
-                onCardClick={handleCardClick}
-                cardData={card.cardData}
-              />
-            ))}
-          </div>
+                className="absolute transform -translate-x-1/2 -translate-y-1/2"
+                style={{
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+                  zIndex: 60 - index
+                }}
+              >
+                <TarotCard
+                  id={card.id}
+                  isFlipped={flippedCards.has(card.id)}
+                  isSelected={selectedCard === card.id}
+                  onCardClick={handleCardClick}
+                  cardData={card.cardData}
+                />
+              </div>
+            );
+          })}
         </div>
-
-        {/* Row 2 */}
-        <div className="flex justify-center mb-4">
-          <div className="flex -space-x-2 sm:-space-x-3 md:-space-x-4 min-w-max">
-            {row2Cards.map((card) => (
-              <TarotCard
-                key={card.id}
-                id={card.id}
-                isFlipped={flippedCards.has(card.id)}
-                isSelected={selectedCard === card.id}
-                onCardClick={handleCardClick}
-                cardData={card.cardData}
-              />
-            ))}
           </div>
-        </div>
-
-        {/* Row 3 */}
-        <div className="flex justify-center mb-8">
-          <div className="flex -space-x-2 sm:-space-x-3 md:-space-x-4 min-w-max">
-            {row3Cards.map((card) => (
-              <TarotCard
-                key={card.id}
-                id={card.id}
-                isFlipped={flippedCards.has(card.id)}
-                isSelected={selectedCard === card.id}
-                onCardClick={handleCardClick}
-                cardData={card.cardData}
-              />
-            ))}
+          
+          {/* Preview Panel */}
+          <div className="w-80 flex-shrink-0">
+            {previewCard ? (
+              <div className="sticky top-8">
+                <div className="bg-card border rounded-lg p-6 shadow-lg">
+                  <h3 className="text-xl font-bold text-foreground mb-4 text-center">
+                    {previewCard.name}
+                  </h3>
+                  
+                  {/* Large Card Image */}
+                  <div className="mb-6">
+                    <img
+                      src={previewCard.img_url}
+                      alt={previewCard.name}
+                      className="w-full h-80 object-contain rounded-lg border"
+                    />
+                  </div>
+                  
+                  {/* Card Details */}
+                  <div className="space-y-4">
+                    {/* Keywords */}
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-2">Keywords</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {previewCard.keyword.map((keyword) => (
+                          <span
+                            key={`keyword-${keyword}`}
+                            className="px-2 py-1 bg-primary/10 text-primary text-sm rounded-full"
+                          >
+                            {keyword}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Light Meaning */}
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-2">Light Meaning</h4>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        {previewCard.light_meaning.slice(0, 3).map((meaning, index) => (
+                          <li key={`light-${meaning.slice(0, 20)}-${index}`} className="flex items-start">
+                            <span className="text-green-500 mr-2">•</span>
+                            {meaning}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    {/* Shadow Meaning */}
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-2">Shadow Meaning</h4>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        {previewCard.shadow_meaning.slice(0, 3).map((meaning, index) => (
+                          <li key={`shadow-${meaning.slice(0, 20)}-${index}`} className="flex items-start">
+                            <span className="text-red-500 mr-2">•</span>
+                            {meaning}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="sticky top-8">
+                <div className="bg-card border rounded-lg p-6 shadow-lg text-center">
+                  <div className="text-6xl mb-4">🔮</div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    เลือกไพ่เพื่อดูคำทำนาย
+                  </h3>
+                  <p className="text-muted-foreground text-sm">
+                    คลิกที่ไพ่เพื่อเปิดดูรายละเอียดและคำทำนาย
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
