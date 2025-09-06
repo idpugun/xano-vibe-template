@@ -478,17 +478,62 @@ export const tarotService = {
         user_id: readingData.user.id,
       });
 
-      // Format the userPrompt with user data and card data
+      // Filter out unwanted fields from user data
+      const filteredUser = {
+        email: readingData.user.email,
+        name: readingData.user.name,
+        realtimeid: readingData.user.realtimeid,
+        interests: readingData.user.interests,
+        birth_place: readingData.user.birth_place,
+        birth_date: readingData.user.birth_date,
+      };
+
+      // Filter out unwanted fields from card data
+      const filteredCardData = readingData.card_data.map((card) => ({
+        name: card.name,
+        fortune_telling: card.fortune_telling,
+        keyword: card.keyword,
+        light_meaning: card.light_meaning,
+        shadow_meaning: card.shadow_meaning,
+      }));
+
+      // Format the userPrompt with filtered user data and card data
       const userPrompt = `Here is the user data and the drawn tarot card:
 
 User:
-${JSON.stringify(readingData.user)}
+- Name: ${filteredUser.name || "Not provided"}
+- Email: ${filteredUser.email}
+- Interests: ${
+        filteredUser.interests
+          ? filteredUser.interests.join(", ")
+          : "Not specified"
+      }
+- Birth Place: ${filteredUser.birth_place || "Not provided"}
+- Birth Date: ${
+        filteredUser.birth_date
+          ? new Date(filteredUser.birth_date).toLocaleDateString()
+          : "Not provided"
+      }
 
-Drawn Card:
-${JSON.stringify(readingData.card_data)}
+Drawn Card${filteredCardData.length > 1 ? "s" : ""}:
+${filteredCardData
+  .map(
+    (card, index) => `
+${index + 1}. ${card.name}
+   Fortune Telling: ${card.fortune_telling.join("; ")}
+   Keywords: ${card.keyword.join(", ")}
+   Light Meaning: ${card.light_meaning.join("; ")}
+   Shadow Meaning: ${card.shadow_meaning.join("; ")}
+`
+  )
+  .join("")}
 
-Please give a tarot reading for pas using this information. 
-Explain what this card might mean for them right now and provide thoughtful advice they can take away from the reading.`;
+Please give a tarot reading for ${
+        filteredUser.name || "this person"
+      } using this information. 
+Explain what this card${
+        filteredCardData.length > 1 ? "s might mean" : " might mean"
+      } for them right now and provide thoughtful advice they can take away from the reading.`;
 
       // Send the new payload structure to tarot/read endpoint
       const payload = {

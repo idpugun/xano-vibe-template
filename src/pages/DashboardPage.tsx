@@ -17,7 +17,7 @@ export const DashboardPage: React.FC = () => {
   const [realtimeConnected, setRealtimeConnected] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [realtimeLoading, setRealtimeLoading] = useState(false);
-  const [readingMode, setReadingMode] = useState<ReadingMode>('single');
+  const [readingMode, setReadingMode] = useState<ReadingMode>('three');
   const [selectedCards, setSelectedCards] = useState<Set<number>>(new Set());
   const [isSubmittingReading, setIsSubmittingReading] = useState(false);
   const [shuffleTrigger, setShuffleTrigger] = useState(0);
@@ -51,6 +51,7 @@ export const DashboardPage: React.FC = () => {
   }>>([]);
   const [cardsLoading, setCardsLoading] = useState(true);
   const [cardsError, setCardsError] = useState<string | null>(null);
+  const [resetFlippedTrigger, setResetFlippedTrigger] = useState(0);
 
   // Function to check if selection matches reading mode requirement
   const isSelectionValid = useCallback(() => {
@@ -373,10 +374,13 @@ export const DashboardPage: React.FC = () => {
 
   // Handle new reading - reset selection and close modal
   const handleNewReading = () => {
+    // Reset flipped cards first
+    setResetFlippedTrigger(prev => prev + 1);
     setSelectedCards(new Set());
     setShowReadingModal(false);
     setReadingResult(null);
-    setShuffleTrigger(prev => prev + 1);
+    // Shuffle cards for new reading
+    handleShuffle();
     // Reset submitted selection to allow new readings
     submittedSelectionRef.current = '';
   };
@@ -520,6 +524,7 @@ export const DashboardPage: React.FC = () => {
           cardsData={tarotCards}
           loading={cardsLoading}
           error={cardsError}
+          resetFlippedTrigger={resetFlippedTrigger}
         />
         
         {/* Selection Status */}
@@ -567,11 +572,12 @@ export const DashboardPage: React.FC = () => {
       <TarotReadingModal
         isOpen={showReadingModal}
         onClose={() => {
+          // Reset flipped cards first
+          setResetFlippedTrigger(prev => prev + 1);
+          // Shuffle cards to reset to idle state
+          handleShuffle();
+          // Then close the modal
           setShowReadingModal(false);
-          // Clear selected cards first to prevent useEffect from triggering
-          setSelectedCards(new Set());
-          // Reset everything and shuffle cards
-          setShuffleTrigger(prev => prev + 1);
           // Reset submitted selection when modal is closed
           submittedSelectionRef.current = '';
         }}

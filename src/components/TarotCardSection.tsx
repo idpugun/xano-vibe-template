@@ -102,6 +102,7 @@ interface TarotCardSectionProps {
   cardsData: TarotCardData[];
   loading: boolean;
   error: string | null;
+  resetFlippedTrigger?: number; // When this changes, reset flipped cards
 }
 
 export const TarotCardSection: React.FC<TarotCardSectionProps> = ({ 
@@ -112,7 +113,8 @@ export const TarotCardSection: React.FC<TarotCardSectionProps> = ({
   onShuffle,
   cardsData,
   loading,
-  error
+  error,
+  resetFlippedTrigger
 }) => {
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
   const [isShuffling, setIsShuffling] = useState(false);
@@ -155,6 +157,16 @@ export const TarotCardSection: React.FC<TarotCardSectionProps> = ({
       prevReadingMode.current = readingMode;
     }
   }, [readingMode]);
+
+  // Reset flipped cards when resetFlippedTrigger changes
+  const prevResetFlippedTrigger = useRef<number>(resetFlippedTrigger || 0);
+  useEffect(() => {
+    if (resetFlippedTrigger && resetFlippedTrigger !== prevResetFlippedTrigger.current) {
+      console.log('🔄 Reset flipped cards triggered from parent');
+      setFlippedCards(new Set());
+      prevResetFlippedTrigger.current = resetFlippedTrigger;
+    }
+  }, [resetFlippedTrigger]);
 
   const handleShuffle = useCallback(() => {
     console.log('🔀 Shuffling cards - clearing all selections');

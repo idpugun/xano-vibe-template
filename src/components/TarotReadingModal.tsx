@@ -80,10 +80,10 @@ export const TarotReadingModal: React.FC<TarotReadingModalProps> = ({
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
-        onClick={onClose}
+        onClick={handleNewReading}
         onKeyDown={(e) => {
           if (e.key === 'Escape') {
-            onClose();
+            handleNewReading();
           }
         }}
         role="button"
@@ -115,7 +115,7 @@ export const TarotReadingModal: React.FC<TarotReadingModalProps> = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onClose}
+                  onClick={handleNewReading}
                   className="h-8 w-8 p-0"
                 >
                   <X className="h-4 w-4" />
@@ -336,7 +336,7 @@ export const TarotReadingModal: React.FC<TarotReadingModalProps> = ({
               </Button>
               <Button
                 variant="outline"
-                onClick={onClose}
+                onClick={handleNewReading}
                 className="px-8 py-3"
               >
                 ปิด
