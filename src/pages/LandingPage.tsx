@@ -1,87 +1,310 @@
-import React from 'react';
+import type React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Star } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Background Image */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: 'url(/unsplash-01.jpg)',
-        }}
-      />
-      
-      {/* Overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background/10 via-background/85 to-background/48 dark:from-background/100 dark:via-background/95 dark:to-background/97" />
-      
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
       {/* Theme Toggle */}
       <div className="absolute top-4 right-4 z-20">
         <ThemeToggle />
       </div>
       
-      {/* Content */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center">
-        <div className="container mx-auto px-4 py-16">
-          <section className="text-center max-w-4xl mx-auto">          
+      {/* Hero Section */}
+      <section className="relative min-h-screen flex items-center justify-center px-4 py-20">
+        <div className="max-w-6xl mx-auto text-center">
             {/* Main Heading */}
-            <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-8 leading-[1.1] drop-shadow-sm">
-              <span className="block bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent py-2">
-                Empowering your idea
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 leading-tight">
+            <span className="block bg-gradient-to-r from-purple-400 via-pink-500 to-amber-400 bg-clip-text text-transparent">
+              เปิดดวงชะตาด้วย AI
+            </span>
+            <span className="block text-3xl md:text-5xl mt-4 text-white/90">
+              ที่เข้าใจคุณอย่างแท้จริง
               </span>
             </h1>
             
             {/* Subtitle */}
-            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed">
-              Built with React, Vite, TailwindCSS, shadcn/ui, and Xano Boiler plate. 
-              Transform your vision into reality with no-code backend.
+          <p className="text-xl md:text-2xl text-white/80 max-w-4xl mx-auto mb-12 leading-relaxed">
+            รับคำทำนายจากไพ่ทาโรต์ที่แม่นยำ ผ่านปัญญาประดิษฐ์ขั้นสูง 
+            <br className="hidden md:block" />
+            พร้อมคำแนะนำเพื่อชีวิตที่ดีกว่าและชัดเจนขึ้น
+          </p>
+          
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
+            <Button asChild size="lg" className="text-xl px-16 py-8 h-auto rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transform hover:scale-105">
+              <Link to="/dashboard">
+                เริ่มต้นทำนายดวง <ArrowRight className="ml-4 h-6 w-6" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" className="text-xl px-16 py-8 h-auto rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 transform hover:scale-105">
+              <Link to="/cards">
+                ดูไพ่ทาโรต์ <ArrowRight className="ml-4 h-6 w-6" />
+              </Link>
+            </Button>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-white mb-2">10,000+</div>
+              <div className="text-white/70">คำทำนายที่แม่นยำ</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-white mb-2">95%</div>
+              <div className="text-white/70">ความพึงพอใจของผู้ใช้</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-white mb-2">24/7</div>
+              <div className="text-white/70">พร้อมให้บริการ</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+              ทำไมต้องเลือก Taro App?
+            </h2>
+            <p className="text-xl text-white/80 max-w-3xl mx-auto">
+              เทคโนโลยี AI ขั้นสูงผสมผสานกับภูมิปัญญาโบราณ 
+              เพื่อให้คำทำนายที่แม่นยำและเป็นประโยชน์
             </p>
-            
-            {/* CTA Button */}
-            <div className="flex justify-center mb-16">
-              <Button asChild size="lg" className="text-lg px-12 py-6 h-auto rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-                <Link to="/login">
-                  Get Started <ArrowRight className="ml-3 h-5 w-5" />
-                </Link>
-              </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="group p-8 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 hover:border-purple-500/60 transition-all duration-300 hover:scale-105">
+              <div className="text-6xl mb-6 text-center">🔮</div>
+              <h3 className="text-2xl font-bold text-white mb-4 text-center">ปัญญาประดิษฐ์ขั้นสูง</h3>
+              <p className="text-white/80 text-center leading-relaxed">
+                ใช้เทคโนโลยี OpenAI ในการวิเคราะห์และให้คำทำนายที่แม่นยำ เข้าใจบริบทของชีวิตคุณ
+              </p>
             </div>
             
-            {/* Tech Stack Logos */}
-            <div className="flex flex-wrap justify-center items-center gap-8 opacity-90">
-              <div className="flex flex-col items-center gap-2 group hover:opacity-100 transition-all duration-300 p-4 rounded-xl bg-secondary/20 hover:bg-secondary/30 hover:scale-105 animate-fade-in">
-                <img src="/React JS.svg" alt="React" className="h-12 w-12 rounded-lg transition-transform duration-300 group-hover:scale-110" loading="lazy" />
-                <span className="text-xs text-muted-foreground">React</span>
+            <div className="group p-8 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 hover:border-amber-500/60 transition-all duration-300 hover:scale-105">
+              <div className="text-6xl mb-6 text-center">👤</div>
+              <h3 className="text-2xl font-bold text-white mb-4 text-center">คำทำนายเฉพาะตัว</h3>
+              <p className="text-white/80 text-center leading-relaxed">
+                คำนึงถึงวันเกิดและข้อมูลส่วนตัว เพื่อให้คำทำนายที่ตรงกับดวงชะตาของคุณมากที่สุด
+              </p>
+            </div>
+            
+            <div className="group p-8 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30 hover:border-blue-500/60 transition-all duration-300 hover:scale-105">
+              <div className="text-6xl mb-6 text-center">📚</div>
+              <h3 className="text-2xl font-bold text-white mb-4 text-center">เก็บประวัติการทำนาย</h3>
+              <p className="text-white/80 text-center leading-relaxed">
+                บันทึกและจัดการคำทำนายทั้งหมด เพิ่มโน้ตส่วนตัว และติดตามความแม่นยำ
+              </p>
+            </div>
+            
+            <div className="group p-8 rounded-2xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 hover:border-green-500/60 transition-all duration-300 hover:scale-105">
+              <div className="text-6xl mb-6 text-center">🇹🇭</div>
+              <h3 className="text-2xl font-bold text-white mb-4 text-center">ภาษาไทยที่เข้าใจง่าย</h3>
+              <p className="text-white/80 text-center leading-relaxed">
+                คำทำนายเป็นภาษาไทยที่เข้าใจง่าย ครอบคลุมทุกด้านของชีวิต
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-20 px-4 bg-gradient-to-r from-purple-800/30 to-pink-800/30">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+              วิธีการใช้งาน
+            </h2>
+            <p className="text-xl text-white/80 max-w-3xl mx-auto">
+              เพียง 3 ขั้นตอนง่ายๆ คุณก็สามารถรับคำทำนายที่แม่นยำได้
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-6">
+                1
               </div>
-              <div className="flex flex-col items-center gap-2 group hover:opacity-100 transition-all duration-300 p-4 rounded-xl bg-secondary/20 hover:bg-secondary/30 hover:scale-105 animate-fade-in" style={{animationDelay: '0.1s'}}>
-                <img src="/Vite.js Logo.svg" alt="Vite" className="h-12 w-12 rounded-lg transition-transform duration-300 group-hover:scale-110" loading="lazy" />
-                <span className="text-xs text-muted-foreground">Vite</span>
+              <h3 className="text-2xl font-bold text-white mb-4">เลือกไพ่</h3>
+              <p className="text-white/80 leading-relaxed">
+                เลือกไพ่ทาโรต์ที่คุณรู้สึกถูกใจ หรือให้ระบบสุ่มเลือกให้
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-20 h-20 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-6">
+                2
               </div>
-              <div className="flex flex-col items-center gap-2 group hover:opacity-100 transition-all duration-300 p-4 rounded-xl bg-secondary/20 hover:bg-secondary/30 hover:scale-105 animate-fade-in" style={{animationDelay: '0.2s'}}>
-                <img src="/Tailwind CSS Icon.png" alt="TailwindCSS" className="h-12 w-12 rounded-lg transition-transform duration-300 group-hover:scale-110" loading="lazy" />
-                <span className="text-xs text-muted-foreground">TailwindCSS</span>
+              <h3 className="text-2xl font-bold text-white mb-4">AI วิเคราะห์</h3>
+              <p className="text-white/80 leading-relaxed">
+                ระบบ AI จะวิเคราะห์ไพ่และข้อมูลส่วนตัวของคุณเพื่อให้คำทำนาย
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-6">
+                3
               </div>
-              <div className="flex flex-col items-center gap-2 group hover:opacity-100 transition-all duration-300 p-4 rounded-xl bg-secondary/20 hover:bg-secondary/30 hover:scale-105 animate-fade-in" style={{animationDelay: '0.3s'}}>
-                <img src="/shadcnuilogo.png" alt="shadcn/ui" className="h-12 w-12 rounded-lg transition-transform duration-300 group-hover:scale-110" loading="lazy" />
-                <span className="text-xs text-muted-foreground">shadcn/ui</span>
+              <h3 className="text-2xl font-bold text-white mb-4">รับคำทำนาย</h3>
+              <p className="text-white/80 leading-relaxed">
+                รับคำทำนายที่แม่นยำและคำแนะนำที่เป็นประโยชน์สำหรับชีวิต
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+              ความคิดเห็นจากผู้ใช้
+            </h2>
+            <p className="text-xl text-white/80 max-w-3xl mx-auto">
+              ฟังเสียงจากผู้ใช้จริงที่ได้รับประโยชน์จาก Taro App
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="p-8 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20">
+              <div className="flex items-center mb-4">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <Star key={`star-${i}-${Math.random()}`} className="w-5 h-5 text-yellow-400 fill-current" />
+                ))}
               </div>
-              <div className="flex flex-col items-center gap-2 group hover:opacity-100 transition-all duration-300 p-4 rounded-xl bg-secondary/20 hover:bg-secondary/30 hover:scale-105 animate-fade-in" style={{animationDelay: '0.4s'}}>
-                <img src="/xano-logo.png" alt="Xano" className="h-12 w-12 rounded-lg transition-transform duration-300 group-hover:scale-110" loading="lazy" />
-                <span className="text-xs text-muted-foreground">Xano</span>
+              <p className="text-white/90 mb-6 leading-relaxed">
+                "คำทำนายแม่นยำมาก! AI เข้าใจสถานการณ์ของฉันได้อย่างน่าประหลาดใจ"
+              </p>
+              <div className="flex items-center">
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold mr-4">
+                  ส
+                </div>
+                <div>
+                  <div className="text-white font-semibold">สมใจ</div>
+                  <div className="text-white/60">ผู้ใช้</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-8 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20">
+              <div className="flex items-center mb-4">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <Star key={`star-${i}-${Math.random()}`} className="w-5 h-5 text-yellow-400 fill-current" />
+                ))}
+              </div>
+              <p className="text-white/90 mb-6 leading-relaxed">
+                "ใช้งานง่ายมาก และคำแนะนำที่ได้ช่วยให้ฉันตัดสินใจได้ดีขึ้น"
+              </p>
+              <div className="flex items-center">
+                <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold mr-4">
+                  น
+                </div>
+                <div>
+                  <div className="text-white font-semibold">นิดา</div>
+                  <div className="text-white/60">ผู้ใช้</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-8 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20">
+              <div className="flex items-center mb-4">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <Star key={`star-${i}-${Math.random()}`} className="w-5 h-5 text-yellow-400 fill-current" />
+                ))}
+              </div>
+              <p className="text-white/90 mb-6 leading-relaxed">
+                "ประวัติการทำนายช่วยให้ฉันติดตามการเปลี่ยนแปลงในชีวิตได้ดี"
+              </p>
+              <div className="flex items-center">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-4">
+                  ก
+                </div>
+                <div>
+                  <div className="text-white font-semibold">กิตติ</div>
+                  <div className="text-white/60">ผู้ใช้</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-4 bg-gradient-to-r from-purple-600/20 to-pink-600/20">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            พร้อมเริ่มต้นการเดินทางแห่งดวงชะตาแล้วหรือยัง?
+          </h2>
+          <p className="text-xl text-white/80 mb-12 leading-relaxed">
+            รับคำทำนายที่แม่นยำจาก AI พร้อมคำแนะนำที่เป็นประโยชน์สำหรับชีวิต
+          </p>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <Button asChild size="lg" className="text-xl px-16 py-8 h-auto rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transform hover:scale-105">
+              <Link to="/dashboard">
+                เริ่มทำนายดวงฟรี <ArrowRight className="ml-4 h-6 w-6" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" className="text-xl px-16 py-8 h-auto rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 transform hover:scale-105">
+              <Link to="/cards">
+                ดูไพ่ทาโรต์ <ArrowRight className="ml-4 h-6 w-6" />
+              </Link>
+            </Button>
               </div>
             </div>
           </section>
           
           {/* Footer */}
-          <footer className="mt-16 text-center">
-            <p className="text-sm text-muted-foreground/60">
-              This boilerplate is created by natt
+      <footer className="py-12 px-4 border-t border-white/20">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="mb-8">
+            <h3 className="text-2xl font-bold text-white mb-4">Taro App</h3>
+            <p className="text-white/80 max-w-2xl mx-auto">
+              เปิดดวงชะตาด้วย AI ที่เข้าใจคุณ รับคำทำนายที่แม่นยำและเป็นประโยชน์
             </p>
-          </footer>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <div>
+              <h4 className="text-white font-semibold mb-4">บริการ</h4>
+              <ul className="space-y-2 text-white/70">
+                <li>คำทำนายไพ่ทาโรต์</li>
+                <li>การวิเคราะห์ด้วย AI</li>
+                <li>ประวัติการทำนาย</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="text-white font-semibold mb-4">ข้อมูล</h4>
+              <ul className="space-y-2 text-white/70">
+                <li>เกี่ยวกับเรา</li>
+                <li>วิธีการใช้งาน</li>
+                <li>คำถามที่พบบ่อย</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="text-white font-semibold mb-4">ติดต่อ</h4>
+              <ul className="space-y-2 text-white/70">
+                <li>support@taroapp.com</li>
+                <li>02-123-4567</li>
+                <li>Line: @taroapp</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-white/20 pt-8">
+            <p className="text-white/60">
+              © 2024 Taro App. สงวนลิขสิทธิ์ทั้งหมด
+            </p>
+          </div>
         </div>
-      </div>
+      </footer>
     </div>
   );
 };

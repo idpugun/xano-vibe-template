@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import type React from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,23 +7,24 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { realtimeService, xanoConfig, authService } from '@/lib/xano';
 import { LogOut, Wifi, WifiOff, User, Activity, Database, Settings, Menu, X } from 'lucide-react';
+import { TarotCardSection } from '@/components/TarotCardSection';
 
 export const DashboardPage: React.FC = () => {
   const { user, logout, isLoading } = useAuth();
-  const [realtimeData, setRealtimeData] = useState<any[]>([]);
+  const [realtimeData, setRealtimeData] = useState<Array<{ action?: string; payload?: { data?: string; message?: string }; timestamp: number; type?: string; message?: string; value?: number; channel?: string }>>([]);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [realtimeLoading, setRealtimeLoading] = useState(false);
 
   // Refs to store subscription and interval for cleanup
-  const realtimeSubscriptionRef = useRef<any>(null);
+  const realtimeSubscriptionRef = useRef<unknown>(null);
   const demoIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   // Track processed messages to prevent duplicates
   const processedMessagesRef = useRef<Set<string>>(new Set());
 
   // Cleanup function for realtime connections
-  const cleanupRealtime = () => {
+  const cleanupRealtime = useCallback(() => {
     if (demoIntervalRef.current) {
       clearInterval(demoIntervalRef.current);
       demoIntervalRef.current = null;
@@ -39,7 +41,7 @@ export const DashboardPage: React.FC = () => {
     processedMessagesRef.current.clear();
     setRealtimeConnected(false);
     setRealtimeData([]);
-  };
+  }, []);
 
   useEffect(() => {
     // Don't try to setup realtime if auth is still loading
@@ -154,7 +156,7 @@ export const DashboardPage: React.FC = () => {
         cleanupRealtime();
       };
     }
-  }, [user, isLoading]); // Re-setup realtime when user data or loading state changes
+  }, [user, isLoading, cleanupRealtime]); // Re-setup realtime when user data or loading state changes
 
   // Enhanced logout function that cleans up realtime connections
   const handleLogout = () => {
@@ -244,6 +246,7 @@ export const DashboardPage: React.FC = () => {
                     <div className="py-2">
                       {realtimeService.isEnabled() && realtimeConnected && (
                         <button
+                          type="button"
                           className="w-full text-left px-4 py-2 text-sm hover:bg-secondary/50 flex items-center space-x-2"
                           onClick={() => {
                             toast('🧪 Test notification triggered!', { duration: 2000 });
@@ -255,6 +258,7 @@ export const DashboardPage: React.FC = () => {
                         </button>
                       )}
                       <button
+                        type="button"
                         className="w-full text-left px-4 py-2 text-sm hover:bg-secondary/50 flex items-center space-x-2 text-red-600 dark:text-red-400"
                         onClick={() => {
                           handleLogout();
@@ -275,92 +279,7 @@ export const DashboardPage: React.FC = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-12">
-        {/* Welcome Section */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Welcome to Xano Boilerplate</h2>
-          <p className="text-lg text-muted-foreground mb-2">This is made by Natt</p>
-          <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-            A modern React TypeScript starter with Xano backend integration, authentication, and real-time capabilities.
-          </p>
-        </div>
-
-        {/* Realtime Status Card */}
-        <div className="max-w-2xl mx-auto">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Activity className="h-5 w-5" />
-                    <span>Realtime Status</span>
-                  </CardTitle>
-                  <CardDescription className="mt-2">
-                    {!realtimeService.isEnabled() 
-                      ? 'This is not a realtime project. If you need realtime features, please set up in your .env file.'
-                      : user 
-                        ? `Connected to channel: dashboard/${user.realtimeid || user.id}`
-                        : 'Waiting for user authentication...'
-                    }
-                  </CardDescription>
-                </div>
-                <div className={`h-3 w-3 rounded-full ${
-                  !realtimeService.isEnabled() 
-                    ? 'bg-muted-foreground' 
-                    : realtimeConnected 
-                      ? 'bg-green-500 animate-pulse' 
-                      : realtimeLoading
-                        ? 'bg-amber-500 animate-ping'
-                        : 'bg-red-500'
-                }`} />
-              </div>
-            </CardHeader>
-            
-            {realtimeService.isEnabled() && (
-              <CardContent>
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {realtimeData.length > 0 ? (
-                    realtimeData.map((item, index) => (
-                      <div key={index} className="flex items-start space-x-3 p-3 bg-secondary/30 rounded-lg border border-secondary">
-                        <div className="bg-primary/10 p-1.5 rounded-full mt-0.5">
-                          <Activity className="h-3 w-3 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium">{item.action || 'Activity'}</p>
-                          {item.payload?.data && (
-                            <p className="text-xs text-muted-foreground">{item.payload.data}</p>
-                          )}
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(item.timestamp).toLocaleTimeString()}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Activity className="h-8 w-8 mx-auto mb-3 opacity-50" />
-                      <p className="text-sm">No realtime activity yet</p>
-                      <p className="text-xs mt-1">Send a message to see live updates</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            )}
-            
-            {!realtimeService.isEnabled() && (
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <WifiOff className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-sm font-medium mb-2">Realtime Not Configured</p>
-                  <p className="text-xs mb-4">To enable realtime features, add these to your .env file:</p>
-                  <div className="bg-secondary/50 rounded-lg p-4 text-left text-xs font-mono">
-                    <p>VITE_XANO_REALTIME_ENABLED=true</p>
-                    <p>VITE_XANO_REALTIME_HASH=your-connection-hash</p>
-                  </div>
-                </div>
-              </CardContent>
-            )}
-          </Card>
-        </div>
+        <TarotCardSection />
       </main>
 
       {/* Click outside to close menu */}
@@ -368,6 +287,14 @@ export const DashboardPage: React.FC = () => {
         <div 
           className="fixed inset-0 z-40" 
           onClick={() => setMenuOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setMenuOpen(false);
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label="Close menu"
         />
       )}
     </div>

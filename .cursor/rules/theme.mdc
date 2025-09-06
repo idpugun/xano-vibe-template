@@ -1,0 +1,15 @@
+---
+description: Modern mystical webapp with cosmic elements
+globs:
+alwaysApply: true
+---
+
+**Theme**: Modern mystical with dark, cosmic elements
+**Colors**: Deep purples (#2D1B69, #4A148C), midnight blues (#0A0E27, #1A237E), gold accents (#FFD700, #FFA000), starlight whites (#FFFFFF, #F8F9FA)
+**Mood**: Mysterious yet trustworthy, magical yet sophisticated
+**Style**: 
+
+## Design Principles
+- Use gradient backgrounds with cosmic colors
+- Implement subtle animations and particle effects
+- Maintain high contrast for accessibility

@@ -64,7 +64,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
 }
 
@@ -83,4 +83,78 @@
       transform: translateY(0);
     }
   }
+
+  /* IBM Plex Sans Thai Font Weight Classes */
+  .ibm-plex-sans-thai-thin {
+    font-family: "IBM Plex Sans Thai", sans-serif;
+    font-weight: 100;
+    font-style: normal;
+  }
+
+  .ibm-plex-sans-thai-extralight {
+    font-family: "IBM Plex Sans Thai", sans-serif;
+    font-weight: 200;
+    font-style: normal;
+  }
+
+  .ibm-plex-sans-thai-light {
+    font-family: "IBM Plex Sans Thai", sans-serif;
+    font-weight: 300;
+    font-style: normal;
+  }
+
+  .ibm-plex-sans-thai-regular {
+    font-family: "IBM Plex Sans Thai", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  .ibm-plex-sans-thai-medium {
+    font-family: "IBM Plex Sans Thai", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+  }
+
+  .ibm-plex-sans-thai-semibold {
+    font-family: "IBM Plex Sans Thai", sans-serif;
+    font-weight: 600;
+    font-style: normal;
+  }
+
+  .ibm-plex-sans-thai-bold {
+    font-family: "IBM Plex Sans Thai", sans-serif;
+    font-weight: 700;
+    font-style: normal;
+  }
+
+  /* 3D Card Flip Animation */
+  .rotate-y-0 {
+    transform: rotateY(0deg);
+  }
+
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+
+  /* Responsive card sizing with clamp */
+  .card-responsive {
+    width: clamp(100px, 4vw, 120px);
+    height: clamp(120px, 12vw, 140px);
+  }
+
+  /* Mobile responsive adjustments */
+  @media (max-width: 640px) {
+    .card-responsive {
+      width: clamp(80px, 3.5vw, 100px);
+      height: clamp(100px, 10vw, 120px);
+    }
+  }
+
+  @media (min-width: 641px) and (max-width: 768px) {
+    .card-responsive {
+      width: clamp(90px, 3.8vw, 110px);
+      height: clamp(110px, 11vw, 130px);
+    }
+  }
+
 }
