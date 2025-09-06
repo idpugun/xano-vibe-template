@@ -8,6 +8,7 @@ import { realtimeService, authService } from '@/lib/xano';
 import { LogOut, User, Activity, Database, Menu, X, Eye, History, Settings } from 'lucide-react';
 import { TarotCardSection } from '@/components/TarotCardSection';
 import { BackToLanding } from '@/components/BackToLanding';
+import { ReadingModeSelector, type ReadingMode } from '@/components/ReadingModeSelector';
 import { Link } from 'react-router-dom';
 
 export const DashboardPage: React.FC = () => {
@@ -15,6 +16,7 @@ export const DashboardPage: React.FC = () => {
   const [realtimeConnected, setRealtimeConnected] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [realtimeLoading, setRealtimeLoading] = useState(false);
+  const [readingMode, setReadingMode] = useState<ReadingMode>('single');
   
 
   // Refs to store subscription and interval for cleanup
@@ -285,7 +287,13 @@ export const DashboardPage: React.FC = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-12">
-        <TarotCardSection />
+        {/* Reading Mode Selector */}
+        <ReadingModeSelector 
+          selectedMode={readingMode}
+          onModeChange={setReadingMode}
+        />
+        
+        <TarotCardSection readingMode={readingMode} />
         
         {/* Action Buttons */}
         <div className="flex justify-center gap-6 mt-12">
@@ -294,7 +302,9 @@ export const DashboardPage: React.FC = () => {
             className="px-8 py-4 text-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
           >
             <Eye className="mr-2 h-5 w-5" />
-            ดูดวงตอนนี้
+            {readingMode === 'single' && 'ดูดวงใบเดียว'}
+            {readingMode === 'three' && 'ดูดวง 3 ใบ'}
+            {readingMode === 'celtic' && 'ดูดวง Celtic Cross'}
           </Button>
           <Button 
             size="lg" 

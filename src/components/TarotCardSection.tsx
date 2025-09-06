@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useState, useEffect } from 'react';
 import { Shuffle } from 'lucide-react';
+import type { ReadingMode } from './ReadingModeSelector';
 
 interface TarotCardData {
   id: number;
@@ -92,15 +93,35 @@ const TarotCard: React.FC<TarotCardProps> = ({ id, isFlipped, isSelected, onCard
   );
 };
 
-export const TarotCardSection: React.FC = () => {
+interface TarotCardSectionProps {
+  readingMode: ReadingMode;
+}
+
+export const TarotCardSection: React.FC<TarotCardSectionProps> = ({ readingMode }) => {
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
-  const [selectedCard, setSelectedCard] = useState<number | null>(null);
+  const [selectedCards, setSelectedCards] = useState<Set<number>>(new Set());
   const [cardsData, setCardsData] = useState<TarotCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [previewCard, setPreviewCard] = useState<TarotCardData | null>(null);
   const [shuffleKey, setShuffleKey] = useState(0);
   const [isShuffling, setIsShuffling] = useState(false);
+
+  // Get selection limit based on reading mode
+  const getSelectionLimit = () => {
+    switch (readingMode) {
+      case 'single':
+        return 1;
+      case 'three':
+        return 3;
+      case 'celtic':
+        return 10;
+      default:
+        return 1;
+    }
+  };
+
+  const selectionLimit = getSelectionLimit();
 
   // Fetch tarot cards data from API
   useEffect(() => {
@@ -129,34 +150,51 @@ export const TarotCardSection: React.FC = () => {
 
   const handleCardClick = (cardId: number) => {
     // Find the card data
-    const allCards = [...row1Cards, ...row2Cards, ...row3Cards];
-    const cardData = allCards.find(card => card.id === cardId)?.cardData;
+    const cardData = displayCards.find(card => card.id === cardId)?.cardData;
     
-    // If clicking the same card, flip it
-    if (selectedCard === cardId) {
-      setFlippedCards(prev => {
+    // If clicking a selected card, deselect it
+    if (selectedCards.has(cardId)) {
+      setSelectedCards(prev => {
         const newSet = new Set(prev);
-        if (newSet.has(cardId)) {
-          newSet.delete(cardId);
-          setPreviewCard(null); // Hide preview when flipping back
-        } else {
-          newSet.add(cardId);
-          setPreviewCard(cardData || null); // Show preview when flipping
-        }
+        newSet.delete(cardId);
         return newSet;
       });
+      setFlippedCards(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(cardId);
+        return newSet;
+      });
+      setPreviewCard(null);
     } else {
-      // Select new card and flip it
-      setSelectedCard(cardId);
-      setFlippedCards(new Set([cardId]));
-      setPreviewCard(cardData || null); // Show preview for new card
+      // Check if we can select more cards
+      if (selectedCards.size < selectionLimit) {
+        setSelectedCards(prev => new Set([...prev, cardId]));
+        setFlippedCards(prev => new Set([...prev, cardId]));
+        setPreviewCard(cardData || null);
+      } else {
+        // If at limit, replace the first selected card
+        const firstSelected = Array.from(selectedCards)[0];
+        setSelectedCards(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(firstSelected);
+          newSet.add(cardId);
+          return newSet;
+        });
+        setFlippedCards(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(firstSelected);
+          newSet.add(cardId);
+          return newSet;
+        });
+        setPreviewCard(cardData || null);
+      }
     }
   };
 
   const handleShuffle = () => {
     setIsShuffling(true);
     // Clear current selection and flipped cards
-    setSelectedCard(null);
+    setSelectedCards(new Set());
     setFlippedCards(new Set());
     setPreviewCard(null);
     
@@ -169,23 +207,20 @@ export const TarotCardSection: React.FC = () => {
     }, 1000);
   };
 
-  const generateCards = (startId: number, count: number) => {
+  const generateCards = (count: number) => {
     return Array.from({ length: count }, (_, index) => {
       // Use shuffle key to create different random patterns
-      const randomSeed = (shuffleKey * 1000) + (startId + index);
+      const randomSeed = (shuffleKey * 1000) + index;
       const cardIndex = (randomSeed + index) % cardsData.length;
       return {
-        id: startId + index,
+        id: index,
         cardData: cardsData[cardIndex]
       };
     });
   };
 
-  console.log('row1Cards=============================');
-
-  const row1Cards = generateCards(0, 20);
-  const row2Cards = generateCards(20, 20);
-  const row3Cards = generateCards(40, 20);
+  // Generate full pile of cards (60 cards like before)
+  const displayCards = generateCards(60);
 
   if (loading) {
     return (
@@ -258,53 +293,64 @@ export const TarotCardSection: React.FC = () => {
         <div className="flex gap-8">
           {/* Card Layout */}
           <div className="flex-1">
-        
-        {/* Scattered Card Layout - No Overlap */}
-        <div className="relative w-full h-[600px] sm:h-[700px] md:h-[800px] mb-8">
-          {/* All cards scattered with no overlap */}
-          {[...row1Cards, ...row2Cards, ...row3Cards].map((card, index) => {
-            // Generate grid-based positions with slight offsets to avoid overlap
-            const gridSize = 8; // 8x8 grid
-            const gridX = index % gridSize;
-            const gridY = Math.floor(index / gridSize);
-            
-            // Base position in grid
-            const baseX = (gridX / (gridSize - 1)) * 80 + 10; // 10-90% range
-            const baseY = (gridY / (gridSize - 1)) * 80 + 10; // 10-90% range
-            
-            // Add shuffle key to create different patterns each time
-            const seed = (card.id * 1.618) + (shuffleKey * 100);
-            const offsetX = (Math.sin(seed) * 8) + (Math.cos(seed * 1.3) * 4); // ±12px offset
-            const offsetY = (Math.cos(seed * 1.7) * 8) + (Math.sin(seed * 2.1) * 4); // ±12px offset
-            
-            const x = Math.max(5, Math.min(95, baseX + offsetX)); // Clamp to 5-95%
-            const y = Math.max(5, Math.min(95, baseY + offsetY)); // Clamp to 5-95%
-            
-            // Gentle rotation for natural look
-            const rotation = (Math.sin(seed * 2.1) * 15) + (Math.cos(seed * 1.7) * 8); // ±23 degrees
-            
-            return (
-              <div
-                key={`${card.id}-${shuffleKey}`}
-                className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-1000 ease-in-out"
-                style={{
-                  left: `${x}%`,
-                  top: `${y}%`,
-                  transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-                  zIndex: 60 - index
-                }}
-              >
-                <TarotCard
-                  id={card.id}
-                  isFlipped={flippedCards.has(card.id)}
-                  isSelected={selectedCard === card.id}
-                  onCardClick={handleCardClick}
-                  cardData={card.cardData}
-                />
+            {/* Selection Status */}
+            <div className="text-center mb-4">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
+                <span className="text-sm font-medium text-primary">
+                  เลือกแล้ว: {selectedCards.size} / {selectionLimit}
+                </span>
+                {selectedCards.size === selectionLimit && (
+                  <span className="text-xs text-green-600">✓ พร้อมทำนาย</span>
+                )}
               </div>
-            );
-          })}
-        </div>
+            </div>
+
+            {/* Scattered Card Layout - Full Pile */}
+            <div className="relative w-full h-[600px] sm:h-[700px] md:h-[800px] mb-8">
+              {/* All cards scattered with no overlap */}
+              {displayCards.map((card, index) => {
+                // Generate grid-based positions with slight offsets to avoid overlap
+                const gridSize = 8; // 8x8 grid
+                const gridX = index % gridSize;
+                const gridY = Math.floor(index / gridSize);
+                
+                // Base position in grid
+                const baseX = (gridX / (gridSize - 1)) * 80 + 10; // 10-90% range
+                const baseY = (gridY / (gridSize - 1)) * 80 + 10; // 10-90% range
+                
+                // Add shuffle key to create different patterns each time
+                const seed = (card.id * 1.618) + (shuffleKey * 100);
+                const offsetX = (Math.sin(seed) * 8) + (Math.cos(seed * 1.3) * 4); // ±12px offset
+                const offsetY = (Math.cos(seed * 1.7) * 8) + (Math.sin(seed * 2.1) * 4); // ±12px offset
+                
+                const x = Math.max(5, Math.min(95, baseX + offsetX)); // Clamp to 5-95%
+                const y = Math.max(5, Math.min(95, baseY + offsetY)); // Clamp to 5-95%
+                
+                // Gentle rotation for natural look
+                const rotation = (Math.sin(seed * 2.1) * 15) + (Math.cos(seed * 1.7) * 8); // ±23 degrees
+                
+                return (
+                  <div
+                    key={`${card.id}-${shuffleKey}`}
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-1000 ease-in-out"
+                    style={{
+                      left: `${x}%`,
+                      top: `${y}%`,
+                      transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+                      zIndex: selectedCards.has(card.id) ? 1000 : 60 - index
+                    }}
+                  >
+                    <TarotCard
+                      id={card.id}
+                      isFlipped={flippedCards.has(card.id)}
+                      isSelected={selectedCards.has(card.id)}
+                      onCardClick={handleCardClick}
+                      cardData={card.cardData}
+                    />
+                  </div>
+                );
+              })}
+            </div>
           </div>
           
           {/* Preview Panel */}
@@ -391,9 +437,27 @@ export const TarotCardSection: React.FC = () => {
           <div className="bg-secondary/20 backdrop-blur-sm rounded-lg p-6 max-w-md mx-auto">
             <h3 className="text-foreground font-semibold mb-2">วิธีใช้งาน</h3>
             <p className="text-muted-foreground text-sm">
-              คลิกที่ไพ่เพื่อเลือกและพลิกดูคำทำนาย 
-              <br />
-              สามารถเลือกได้ครั้งละ 1 ใบเท่านั้น
+              {readingMode === 'single' && (
+                <>
+                  เลือกไพ่ 1 ใบจากกองเพื่อทำนาย
+                  <br />
+                  เหมาะสำหรับคำถามที่ต้องการคำตอบด่วน
+                </>
+              )}
+              {readingMode === 'three' && (
+                <>
+                  เลือกไพ่ 3 ใบจากกองเพื่อทำนาย
+                  <br />
+                  อดีต / ปัจจุบัน / อนาคต
+                </>
+              )}
+              {readingMode === 'celtic' && (
+                <>
+                  เลือกไพ่ 10 ใบจากกองเพื่อทำนาย
+                  <br />
+                  การทำนายแบบ Celtic Cross ครอบคลุมทุกด้าน
+                </>
+              )}
             </p>
           </div>
         </div>

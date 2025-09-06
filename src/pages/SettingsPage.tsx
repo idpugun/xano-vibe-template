@@ -20,7 +20,7 @@ export const SettingsPage: React.FC = () => {
     birth_date: user?.birth_date ? new Date(user.birth_date).toISOString().split('T')[0] : '',
     birth_time: user?.birth_date ? new Date(user.birth_date).toTimeString().split(' ')[0].substring(0, 5) : ''
   });
-  
+ 
   // Available interests
   const defaultInterests = ["การงาน", "การเงิน", "ความรัก"];
   const [newInterest, setNewInterest] = useState('');
