@@ -95,11 +95,16 @@ const TarotCard: React.FC<TarotCardProps> = ({ id, isFlipped, isSelected, onCard
 
 interface TarotCardSectionProps {
   readingMode: ReadingMode;
+  selectedCards: Set<number>;
+  onSelectedCardsChange: (cards: Set<number>) => void;
 }
 
-export const TarotCardSection: React.FC<TarotCardSectionProps> = ({ readingMode }) => {
+export const TarotCardSection: React.FC<TarotCardSectionProps> = ({ 
+  readingMode, 
+  selectedCards, 
+  onSelectedCardsChange 
+}) => {
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
-  const [selectedCards, setSelectedCards] = useState<Set<number>>(new Set());
   const [cardsData, setCardsData] = useState<TarotCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -154,11 +159,10 @@ export const TarotCardSection: React.FC<TarotCardSectionProps> = ({ readingMode 
     
     // If clicking a selected card, deselect it
     if (selectedCards.has(cardId)) {
-      setSelectedCards(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(cardId);
-        return newSet;
-      });
+      const newSelectedCards = new Set(selectedCards);
+      newSelectedCards.delete(cardId);
+      onSelectedCardsChange(newSelectedCards);
+      
       setFlippedCards(prev => {
         const newSet = new Set(prev);
         newSet.delete(cardId);
@@ -168,18 +172,18 @@ export const TarotCardSection: React.FC<TarotCardSectionProps> = ({ readingMode 
     } else {
       // Check if we can select more cards
       if (selectedCards.size < selectionLimit) {
-        setSelectedCards(prev => new Set([...prev, cardId]));
+        const newSelectedCards = new Set([...selectedCards, cardId]);
+        onSelectedCardsChange(newSelectedCards);
         setFlippedCards(prev => new Set([...prev, cardId]));
         setPreviewCard(cardData || null);
       } else {
         // If at limit, replace the first selected card
         const firstSelected = Array.from(selectedCards)[0];
-        setSelectedCards(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(firstSelected);
-          newSet.add(cardId);
-          return newSet;
-        });
+        const newSelectedCards = new Set(selectedCards);
+        newSelectedCards.delete(firstSelected);
+        newSelectedCards.add(cardId);
+        onSelectedCardsChange(newSelectedCards);
+        
         setFlippedCards(prev => {
           const newSet = new Set(prev);
           newSet.delete(firstSelected);
@@ -194,7 +198,7 @@ export const TarotCardSection: React.FC<TarotCardSectionProps> = ({ readingMode 
   const handleShuffle = () => {
     setIsShuffling(true);
     // Clear current selection and flipped cards
-    setSelectedCards(new Set());
+    onSelectedCardsChange(new Set());
     setFlippedCards(new Set());
     setPreviewCard(null);
     

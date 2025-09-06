@@ -17,7 +17,13 @@ export const DashboardPage: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [realtimeLoading, setRealtimeLoading] = useState(false);
   const [readingMode, setReadingMode] = useState<ReadingMode>('single');
-  
+  const [selectedCards, setSelectedCards] = useState<Set<number>>(new Set());
+
+  // Function to check if selection matches reading mode requirement
+  const isSelectionValid = () => {
+    const requiredCards = readingMode === 'single' ? 1 : readingMode === 'three' ? 3 : 10;
+    return selectedCards.size === requiredCards;
+  };
 
   // Refs to store subscription and interval for cleanup
   const realtimeSubscriptionRef = useRef<unknown>(null);
@@ -293,27 +299,52 @@ export const DashboardPage: React.FC = () => {
           onModeChange={setReadingMode}
         />
         
-        <TarotCardSection readingMode={readingMode} />
+        <TarotCardSection 
+          readingMode={readingMode} 
+          selectedCards={selectedCards}
+          onSelectedCardsChange={setSelectedCards}
+        />
         
         {/* Action Buttons */}
-        <div className="flex justify-center gap-6 mt-12">
-          <Button 
-            size="lg" 
-            className="px-8 py-4 text-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-          >
-            <Eye className="mr-2 h-5 w-5" />
-            {readingMode === 'single' && 'ดูดวงใบเดียว'}
-            {readingMode === 'three' && 'ดูดวง 3 ใบ'}
-            {readingMode === 'celtic' && 'ดูดวง Celtic Cross'}
-          </Button>
-          <Button 
-            size="lg" 
-            variant="outline"
-            className="px-8 py-4 text-lg"
-          >
-            <History className="mr-2 h-5 w-5" />
-            ประวัติคำทำนาย
-          </Button>
+        <div className="flex flex-col items-center gap-6 mt-12">
+          <div className="flex gap-6">
+            <Button 
+              size="lg" 
+              disabled={!isSelectionValid()}
+              className={`px-8 py-4 text-lg transition-all duration-300 ${
+                isSelectionValid() 
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700' 
+                  : 'bg-muted text-muted-foreground cursor-not-allowed'
+              }`}
+            >
+              <Eye className="mr-2 h-5 w-5" />
+              {readingMode === 'single' && 'ดูดวงใบเดียว'}
+              {readingMode === 'three' && 'ดูดวง 3 ใบ'}
+              {readingMode === 'celtic' && 'ดูดวง Celtic Cross'}
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline"
+              className="px-8 py-4 text-lg"
+            >
+              <History className="mr-2 h-5 w-5" />
+              ประวัติคำทำนาย
+            </Button>
+          </div>
+          
+          {/* Selection Status */}
+          {!isSelectionValid() && (
+            <div className="text-center">
+              <p className="text-muted-foreground text-sm">
+                {readingMode === 'single' && 'กรุณาเลือกไพ่ 1 ใบเพื่อทำนาย'}
+                {readingMode === 'three' && 'กรุณาเลือกไพ่ 3 ใบเพื่อทำนาย'}
+                {readingMode === 'celtic' && 'กรุณาเลือกไพ่ 10 ใบเพื่อทำนาย'}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                เลือกแล้ว: {selectedCards.size} / {readingMode === 'single' ? 1 : readingMode === 'three' ? 3 : 10}
+              </p>
+            </div>
+          )}
         </div>
       </main>
 
