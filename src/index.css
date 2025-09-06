@@ -136,6 +136,10 @@
     transform: rotateY(180deg);
   }
 
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
   /* Responsive card sizing with clamp */
   .card-responsive {
     width: clamp(100px, 4vw, 120px);

@@ -2,19 +2,18 @@ import type React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/contexts/AuthContext';
-import { realtimeService, xanoConfig, authService } from '@/lib/xano';
-import { LogOut, Wifi, WifiOff, User, Activity, Database, Settings, Menu, X } from 'lucide-react';
+import { realtimeService, authService } from '@/lib/xano';
+import { LogOut, User, Activity, Database, Menu, X, Eye, History } from 'lucide-react';
 import { TarotCardSection } from '@/components/TarotCardSection';
 
 export const DashboardPage: React.FC = () => {
   const { user, logout, isLoading } = useAuth();
-  const [realtimeData, setRealtimeData] = useState<Array<{ action?: string; payload?: { data?: string; message?: string }; timestamp: number; type?: string; message?: string; value?: number; channel?: string }>>([]);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [realtimeLoading, setRealtimeLoading] = useState(false);
+  
 
   // Refs to store subscription and interval for cleanup
   const realtimeSubscriptionRef = useRef<unknown>(null);
@@ -37,10 +36,9 @@ export const DashboardPage: React.FC = () => {
         duration: 2000,
       });
     }
-    // Clear processed messages
-    processedMessagesRef.current.clear();
-    setRealtimeConnected(false);
-    setRealtimeData([]);
+            // Clear processed messages
+            processedMessagesRef.current.clear();
+            setRealtimeConnected(false);
   }, []);
 
   useEffect(() => {
@@ -71,8 +69,7 @@ export const DashboardPage: React.FC = () => {
           const subscription = await realtimeService.subscribe(channelName, (data) => {
             
             // Create a unique message ID for deduplication
-            const messageId = `${data.action}-${JSON.stringify(data.payload)}-${Date.now()}`;
-            const roughId = `${data.action}-${JSON.stringify(data.payload)}`;
+            const roughId = `${data.action || 'unknown'}-${JSON.stringify(data.payload || {})}`;
             
             // Check if we've already processed this message recently
             if (processedMessagesRef.current.has(roughId)) {
@@ -84,11 +81,12 @@ export const DashboardPage: React.FC = () => {
             processedMessagesRef.current.add(roughId);
             if (processedMessagesRef.current.size > 50) {
               const firstItem = processedMessagesRef.current.values().next().value;
-              processedMessagesRef.current.delete(firstItem);
+              if (firstItem) {
+                processedMessagesRef.current.delete(firstItem);
+              }
             }
             
-            // Update the UI data
-            setRealtimeData(prev => [...prev, { ...data, timestamp: Date.now() }].slice(-10));
+            // Update the UI data (removed for tarot card focus)
             
             // Handle different types of realtime messages
             if (data.action === 'connection_status' || data.action === 'join') {
@@ -127,13 +125,7 @@ export const DashboardPage: React.FC = () => {
 
             // Simulate some realtime data for demo
             const interval = setInterval(() => {
-              const demoData = {
-                type: 'user_activity',
-                message: `User ${currentUser.name || currentUser.email} activity at ${new Date().toLocaleTimeString()}`,
-                value: Math.floor(Math.random() * 100),
-                channel: channelName,
-              };
-              setRealtimeData(prev => [...prev, { ...demoData, timestamp: Date.now() }].slice(-10));
+            // Demo data removed for tarot card focus
             }, 5000);
             demoIntervalRef.current = interval;
           }
@@ -157,6 +149,7 @@ export const DashboardPage: React.FC = () => {
       };
     }
   }, [user, isLoading, cleanupRealtime]); // Re-setup realtime when user data or loading state changes
+
 
   // Enhanced logout function that cleans up realtime connections
   const handleLogout = () => {
@@ -280,6 +273,25 @@ export const DashboardPage: React.FC = () => {
       {/* Main Content */}
       <main className="container mx-auto px-6 py-12">
         <TarotCardSection />
+        
+        {/* Action Buttons */}
+        <div className="flex justify-center gap-6 mt-12">
+          <Button 
+            size="lg" 
+            className="px-8 py-4 text-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+          >
+            <Eye className="mr-2 h-5 w-5" />
+            ดูดวงตอนนี้
+          </Button>
+          <Button 
+            size="lg" 
+            variant="outline"
+            className="px-8 py-4 text-lg"
+          >
+            <History className="mr-2 h-5 w-5" />
+            ประวัติคำทำนาย
+          </Button>
+        </div>
       </main>
 
       {/* Click outside to close menu */}

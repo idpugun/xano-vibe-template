@@ -1,34 +1,27 @@
 import type React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+interface TarotCardData {
+  id: number;
+  name: string;
+  fortune_telling: string[];
+  keyword: string[];
+  light_meaning: string[];
+  shadow_meaning: string[];
+  img_url: string;
+}
 
 interface TarotCardProps {
   id: number;
   isFlipped: boolean;
   isSelected: boolean;
   onCardClick: (id: number) => void;
+  cardData?: TarotCardData;
 }
 
-const TarotCard: React.FC<TarotCardProps> = ({ id, isFlipped, isSelected, onCardClick }) => {
-  const cardNames = [
-    'The Fool', 'The Magician', 'The High Priestess', 'The Empress', 'The Emperor',
-    'The Hierophant', 'The Lovers', 'The Chariot', 'Strength', 'The Hermit',
-    'Wheel of Fortune', 'Justice', 'The Hanged Man', 'Death', 'Temperance',
-    'The Devil', 'The Tower', 'The Star', 'The Moon', 'The Sun',
-    'Judgement', 'The World', 'Ace of Wands', 'Two of Wands', 'Three of Wands',
-    'Four of Wands', 'Five of Wands', 'Six of Wands', 'Seven of Wands', 'Eight of Wands',
-    'Nine of Wands', 'Ten of Wands', 'Page of Wands', 'Knight of Wands', 'Queen of Wands',
-    'King of Wands', 'Ace of Cups', 'Two of Cups', 'Three of Cups', 'Four of Cups',
-    'Five of Cups', 'Six of Cups', 'Seven of Cups', 'Eight of Cups', 'Nine of Cups',
-    'Ten of Cups', 'Page of Cups', 'Knight of Cups', 'Queen of Cups', 'King of Cups',
-    'Ace of Swords', 'Two of Swords', 'Three of Swords', 'Four of Swords', 'Five of Swords',
-    'Six of Swords', 'Seven of Swords', 'Eight of Swords', 'Nine of Swords', 'Ten of Swords',
-    'Page of Swords', 'Knight of Swords', 'Queen of Swords', 'King of Swords', 'Ace of Pentacles',
-    'Two of Pentacles', 'Three of Pentacles', 'Four of Pentacles', 'Five of Pentacles', 'Six of Pentacles',
-    'Seven of Pentacles', 'Eight of Pentacles', 'Nine of Pentacles', 'Ten of Pentacles', 'Page of Pentacles',
-    'Knight of Pentacles', 'Queen of Pentacles', 'King of Pentacles'
-  ];
-
-  const cardName = cardNames[id % cardNames.length] || `Card ${id + 1}`;
+const TarotCard: React.FC<TarotCardProps> = ({ id, isFlipped, isSelected, onCardClick, cardData }) => {
+  const cardName = cardData?.name || `Card ${id + 1}`;
+  const cardImageUrl = cardData?.img_url || '/backside.png';
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -41,7 +34,8 @@ const TarotCard: React.FC<TarotCardProps> = ({ id, isFlipped, isSelected, onCard
     <button
       type="button"
       className={`
-        relative w-full h-32 min-w-[100px] cursor-pointer transition-all duration-300 ease-in-out
+        relative w-16 h-24 sm:w-20 sm:h-32 md:w-24 md:h-36 min-w-[64px] sm:min-w-[80px] md:min-w-[96px]
+        cursor-pointer transition-all duration-300 ease-in-out
         ${isSelected ? 'scale-110 z-[1000]' : 'scale-100'}
         hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50
       `}
@@ -63,32 +57,34 @@ const TarotCard: React.FC<TarotCardProps> = ({ id, isFlipped, isSelected, onCard
           transformStyle: 'preserve-3d'
         }}
       >
-        {/* Card Front */}
+        {/* Card Front - Backside Image */}
         <div
-          className="absolute inset-0 w-full h-full rounded-lg bg-gradient-to-br from-purple-600 via-pink-600 to-amber-500 flex items-center justify-center text-white font-bold text-sm text-center p-2"
+          className="absolute inset-0 w-full h-full rounded-lg overflow-hidden"
           style={{
             backfaceVisibility: 'hidden',
             transform: 'rotateY(0deg)'
           }}
         >
-          <div className="text-center">
-            <div className="text-2xl mb-1">🔮</div>
-            <div className="text-xs leading-tight">Tarot</div>
-          </div>
+          <img
+            src="/backside.png"
+            alt="Tarot Card Back"
+            className="w-full h-full object-contain rounded-lg"
+          />
         </div>
 
-        {/* Card Back */}
+        {/* Card Back - Actual Card Image */}
         <div
-          className="absolute inset-0 w-full h-full rounded-lg bg-gradient-to-br from-amber-600 via-orange-500 to-red-500 flex items-center justify-center text-white font-bold text-sm text-center p-2"
+          className="absolute inset-0 w-full h-full rounded-lg overflow-hidden"
           style={{
             backfaceVisibility: 'hidden',
             transform: 'rotateY(180deg)'
           }}
         >
-          <div className="text-center">
-            <div className="text-lg mb-1">✨</div>
-            <div className="text-xs leading-tight">{cardName}</div>
-          </div>
+          <img
+            src={cardImageUrl}
+            alt={`Tarot card: ${cardName}`}
+            className="w-full h-full object-contain rounded-lg"
+          />
         </div>
       </div>
     </button>
@@ -98,6 +94,34 @@ const TarotCard: React.FC<TarotCardProps> = ({ id, isFlipped, isSelected, onCard
 export const TarotCardSection: React.FC = () => {
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
+  const [cardsData, setCardsData] = useState<TarotCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch tarot cards data from API
+  useEffect(() => {
+    const fetchCards = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('https://xi5k-kqun-rjxc.n7e.xano.io/api:bhawqcMo/TarotCard');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setCardsData(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching tarot cards:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch cards');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCards();
+  }, []);
 
   const handleCardClick = (cardId: number) => {
     // If clicking the same card, flip it
@@ -119,12 +143,59 @@ export const TarotCardSection: React.FC = () => {
   };
 
   const generateCards = (startId: number, count: number) => {
-    return Array.from({ length: count }, (_, index) => startId + index);
+    return Array.from({ length: count }, (_, index) => {
+      const cardIndex = (startId + index) % cardsData.length;
+      return {
+        id: startId + index,
+        cardData: cardsData[cardIndex]
+      };
+    });
   };
+
+  console.log('row1Cards=============================');
 
   const row1Cards = generateCards(0, 20);
   const row2Cards = generateCards(20, 20);
   const row3Cards = generateCards(40, 20);
+
+  if (loading) {
+    return (
+      <div className="w-full py-8">
+        <div className="max-w-[800px] mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-8 text-foreground">
+            ไพ่ทาโรต์แห่งดวงชะตา
+          </h2>
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" />
+            <span className="ml-4 text-muted-foreground">กำลังโหลดไพ่ทาโรต์...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full py-8">
+        <div className="max-w-[800px] mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-8 text-foreground">
+            ไพ่ทาโรต์แห่งดวงชะตา
+          </h2>
+          <div className="text-red-500 mb-4">
+            <p>เกิดข้อผิดพลาดในการโหลดไพ่ทาโรต์</p>
+            <p className="text-sm">{error}</p>
+          </div>
+          <button 
+            type="button"
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+          >
+            ลองใหม่
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full py-8">
@@ -139,13 +210,14 @@ export const TarotCardSection: React.FC = () => {
         {/* Row 1 */}
         <div className="flex justify-center mb-4">
           <div className="flex -space-x-2 sm:-space-x-3 md:-space-x-4 min-w-max">
-            {row1Cards.map((cardId) => (
+            {row1Cards.map((card) => (
               <TarotCard
-                key={cardId}
-                id={cardId}
-                isFlipped={flippedCards.has(cardId)}
-                isSelected={selectedCard === cardId}
+                key={card.id}
+                id={card.id}
+                isFlipped={flippedCards.has(card.id)}
+                isSelected={selectedCard === card.id}
                 onCardClick={handleCardClick}
+                cardData={card.cardData}
               />
             ))}
           </div>
@@ -154,13 +226,14 @@ export const TarotCardSection: React.FC = () => {
         {/* Row 2 */}
         <div className="flex justify-center mb-4">
           <div className="flex -space-x-2 sm:-space-x-3 md:-space-x-4 min-w-max">
-            {row2Cards.map((cardId) => (
+            {row2Cards.map((card) => (
               <TarotCard
-                key={cardId}
-                id={cardId}
-                isFlipped={flippedCards.has(cardId)}
-                isSelected={selectedCard === cardId}
+                key={card.id}
+                id={card.id}
+                isFlipped={flippedCards.has(card.id)}
+                isSelected={selectedCard === card.id}
                 onCardClick={handleCardClick}
+                cardData={card.cardData}
               />
             ))}
           </div>
@@ -169,13 +242,14 @@ export const TarotCardSection: React.FC = () => {
         {/* Row 3 */}
         <div className="flex justify-center mb-8">
           <div className="flex -space-x-2 sm:-space-x-3 md:-space-x-4 min-w-max">
-            {row3Cards.map((cardId) => (
+            {row3Cards.map((card) => (
               <TarotCard
-                key={cardId}
-                id={cardId}
-                isFlipped={flippedCards.has(cardId)}
-                isSelected={selectedCard === cardId}
+                key={card.id}
+                id={card.id}
+                isFlipped={flippedCards.has(card.id)}
+                isSelected={selectedCard === card.id}
                 onCardClick={handleCardClick}
+                cardData={card.cardData}
               />
             ))}
           </div>
