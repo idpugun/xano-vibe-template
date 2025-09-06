@@ -1,16 +1,103 @@
 import type React from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { ArrowRight, Star } from 'lucide-react';
+import { ArrowRight, Star, Database, User, Menu, X, LogOut, Settings } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { BackToLanding } from '@/components/BackToLanding';
+import toast from 'react-hot-toast';
 
 export const LandingPage: React.FC = () => {
+  const { user, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    toast('ออกจากระบบเรียบร้อย', { duration: 2000 });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4 z-20">
-        <ThemeToggle />
-      </div>
+      {/* Header */}
+      <header className="border-b backdrop-blur-sm bg-background/80 sticky top-0 z-50">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo/Brand */}
+            <div className="flex items-center space-x-3">
+              <div className="bg-gradient-to-br from-primary to-primary/70 p-2 rounded-xl shadow-sm">
+                <Database className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold">Xano Boilerplate</h1>
+                <p className="text-xs text-muted-foreground">by Natt</p>
+              </div>
+            </div>
+
+            {/* Menu Items */}
+            <div className="flex items-center space-x-4">
+              {/* Home Button */}
+              <BackToLanding />
+              
+              {/* Theme Toggle */}
+              <ThemeToggle />
+              
+              {/* Hamburger Menu */}
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  className="h-9 w-9 p-0"
+                >
+                  {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                </Button>
+
+                {/* Dropdown Menu */}
+                {menuOpen && (
+                  <div className="absolute right-0 top-12 w-64 bg-background border rounded-lg shadow-lg py-2 z-50">
+                    {/* User Info */}
+                    <div className="px-4 py-3 border-b">
+                      <div className="flex items-center space-x-3">
+                        <div className="bg-primary/10 p-2 rounded-full">
+                          <User className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{user?.name || 'User'}</p>
+                          <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-2">
+                      <Link
+                        to="/settings"
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-secondary/50 flex items-center space-x-2"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <Settings className="h-4 w-4" />
+                        <span>การตั้งค่า</span>
+                      </Link>
+                      <button
+                        type="button"
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-secondary/50 flex items-center space-x-2 text-red-600 dark:text-red-400"
+                        onClick={() => {
+                          handleLogout();
+                          setMenuOpen(false);
+                        }}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
       
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center px-4 py-20">

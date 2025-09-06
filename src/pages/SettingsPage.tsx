@@ -5,18 +5,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { BackToLanding } from '@/components/BackToLanding';
 import { useAuth } from '@/contexts/AuthContext';
 import { LogOut, User, Mail, Calendar, MapPin, Heart, Edit, X, Plus } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateProfile, refreshUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
-    interest: user?.interest || [],
+    interests: user?.interests || [],
     birth_place: user?.birth_place || '',
-    birth_date: user?.birth_date ? new Date(user.birth_date).toISOString().split('T')[0] : ''
+    birth_date: user?.birth_date ? new Date(user.birth_date).toISOString().split('T')[0] : '',
+    birth_time: user?.birth_date ? new Date(user.birth_date).toTimeString().split(' ')[0].substring(0, 5) : ''
   });
   
   // Available interests
@@ -42,17 +44,17 @@ export const SettingsPage: React.FC = () => {
   const handleInterestToggle = (interest: string) => {
     setFormData(prev => ({
       ...prev,
-      interest: prev.interest.includes(interest)
-        ? prev.interest.filter(i => i !== interest)
-        : [...prev.interest, interest]
+      interests: prev.interests.includes(interest)
+        ? prev.interests.filter((i: string) => i !== interest)
+        : [...prev.interests, interest]
     }));
   };
 
   const handleAddInterest = () => {
-    if (newInterest.trim() && !formData.interest.includes(newInterest.trim())) {
+    if (newInterest.trim() && !formData.interests.includes(newInterest.trim())) {
       setFormData(prev => ({
         ...prev,
-        interest: [...prev.interest, newInterest.trim()]
+        interests: [...prev.interests, newInterest.trim()]
       }));
       setNewInterest('');
     }
@@ -61,7 +63,7 @@ export const SettingsPage: React.FC = () => {
   const handleRemoveInterest = (interest: string) => {
     setFormData(prev => ({
       ...prev,
-      interest: prev.interest.filter(i => i !== interest)
+      interests: prev.interests.filter((i: string) => i !== interest)
     }));
   };
 
@@ -72,18 +74,45 @@ export const SettingsPage: React.FC = () => {
     }));
   };
 
-  const handleSave = () => {
-    // TODO: Implement API call to save profile
-    console.log('Saving profile:', formData);
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      // Combine birth date and time into epoch timestamp
+      let birthTimestamp: number | undefined;
+      if (formData.birth_date && formData.birth_time) {
+        const dateTimeString = `${formData.birth_date}T${formData.birth_time}:00`;
+        birthTimestamp = new Date(dateTimeString).getTime();
+      } else if (formData.birth_date) {
+        // If only date is provided, use midnight
+        birthTimestamp = new Date(`${formData.birth_date}T00:00:00`).getTime();
+      }
+
+      // Prepare profile data for API
+      const profileData = {
+        interests: formData.interests,
+        birth_place: formData.birth_place || undefined,
+        birth_date: birthTimestamp
+      };
+
+      // Update profile via API
+      await updateProfile(profileData);
+      
+      // Refresh user data to get the latest information
+      await refreshUser();
+      
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Failed to save profile:', error);
+      // You might want to show an error message to the user here
+    }
   };
 
   const handleCancel = () => {
     // Reset form data to original user data
     setFormData({
-      interest: user?.interest || [],
+      interests: user?.interests || [],
       birth_place: user?.birth_place || '',
-      birth_date: user?.birth_date ? new Date(user.birth_date).toISOString().split('T')[0] : ''
+      birth_date: user?.birth_date ? new Date(user.birth_date).toISOString().split('T')[0] : '',
+      birth_time: user?.birth_date ? new Date(user.birth_date).toTimeString().split(' ')[0].substring(0, 5) : ''
     });
     setIsEditing(false);
   };
@@ -105,8 +134,9 @@ export const SettingsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Theme Toggle */}
+            {/* Back Button & Theme Toggle */}
             <div className="flex items-center space-x-4">
+              <BackToLanding />
               <ThemeToggle />
             </div>
           </div>
@@ -149,7 +179,7 @@ export const SettingsPage: React.FC = () => {
                           <Button
                             key={interest}
                             type="button"
-                            variant={formData.interest.includes(interest) ? "default" : "outline"}
+                            variant={formData.interests.includes(interest) ? "default" : "outline"}
                             size="sm"
                             onClick={() => handleInterestToggle(interest)}
                             className="h-8"
@@ -183,11 +213,11 @@ export const SettingsPage: React.FC = () => {
                       </div>
                       
                       {/* Selected Interests */}
-                      {formData.interest.length > 0 && (
+                      {formData.interests.length > 0 && (
                         <div className="space-y-2">
                           <Label className="text-sm text-muted-foreground">ความสนใจที่เลือก:</Label>
                           <div className="flex flex-wrap gap-2">
-                            {formData.interest.map((interest) => (
+                            {formData.interests.map((interest: string) => (
                               <div
                                 key={interest}
                                 className="flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
@@ -224,13 +254,26 @@ export const SettingsPage: React.FC = () => {
                   {/* วันเกิด */}
                   <div className="space-y-2">
                     <Label htmlFor="birth_date" className="text-base font-medium">
-                      วันและเวลาเกิด
+                      วันเกิด
                     </Label>
                     <Input
                       id="birth_date"
                       type="date"
                       value={formData.birth_date}
                       onChange={(e) => handleInputChange('birth_date', e.target.value)}
+                    />
+                  </div>
+
+                  {/* เวลาเกิด */}
+                  <div className="space-y-2">
+                    <Label htmlFor="birth_time" className="text-base font-medium">
+                      เวลาเกิด
+                    </Label>
+                    <Input
+                      id="birth_time"
+                      type="time"
+                      value={formData.birth_time}
+                      onChange={(e) => handleInputChange('birth_time', e.target.value)}
                     />
                   </div>
                 </CardContent>
@@ -301,7 +344,7 @@ export const SettingsPage: React.FC = () => {
                     </div>
                     <div className="p-3 bg-muted/50 rounded-lg">
                       <p className="text-foreground">
-                        {user?.interest ? formatInterests(user.interest) : 'ไม่ระบุ'}
+                        {user?.interests ? formatInterests(user.interests) : 'ไม่ระบุ'}
                       </p>
                     </div>
                   </div>
@@ -324,13 +367,21 @@ export const SettingsPage: React.FC = () => {
                     <div className="flex items-center space-x-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm font-medium text-muted-foreground">
-                        วันเกิด
+                        วันและเวลาเกิด
                       </span>
                     </div>
                     <div className="p-3 bg-muted/50 rounded-lg">
                       <p className="text-foreground">
                         {user?.birth_date ? formatBirthDate(user.birth_date) : 'ไม่ระบุ'}
                       </p>
+                      {user?.birth_date && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          เวลา: {new Date(user.birth_date).toLocaleTimeString('th-TH', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </CardContent>

@@ -8,6 +8,12 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => void;
+  updateProfile: (profileData: {
+    interests?: string[];
+    birth_place?: string;
+    birth_date?: number;
+  }) => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -80,6 +86,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
   };
 
+  const updateProfile = async (profileData: {
+    interests?: string[];
+    birth_place?: string;
+    birth_date?: number;
+  }) => {
+    setIsLoading(true);
+    try {
+      const updatedUser = await authService.updateProfile(profileData);
+      setUser(updatedUser);
+    } catch (error) {
+      console.error('Update profile failed:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshUser = async () => {
+    if (!authService.isAuthenticated()) return;
+    
+    setIsLoading(true);
+    try {
+      const userData = await authService.me();
+      setUser(userData);
+    } catch (error) {
+      console.error('Failed to refresh user data:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isLoading,
@@ -87,6 +125,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     register,
     logout,
+    updateProfile,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

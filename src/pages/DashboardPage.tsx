@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { realtimeService, authService } from '@/lib/xano';
-import { LogOut, User, Activity, Database, Menu, X, Eye, History, Settings, Home } from 'lucide-react';
+import { LogOut, User, Activity, Database, Menu, X, Eye, History, Settings } from 'lucide-react';
 import { TarotCardSection } from '@/components/TarotCardSection';
+import { BackToLanding } from '@/components/BackToLanding';
 import { Link } from 'react-router-dom';
 
 export const DashboardPage: React.FC = () => {
@@ -180,16 +181,7 @@ export const DashboardPage: React.FC = () => {
             {/* Realtime Status & Menu */}
             <div className="flex items-center space-x-4">
               {/* Home Button */}
-              <Link to="/">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-9 px-3"
-                >
-                  <Home className="h-4 w-4 mr-2" />
-                  หน้าแรก
-                </Button>
-              </Link>
+              <BackToLanding />
               
               {/* Theme Toggle */}
               <ThemeToggle />

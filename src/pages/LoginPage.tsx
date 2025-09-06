@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { BackToLanding } from '@/components/BackToLanding';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
@@ -33,8 +35,8 @@ export const LoginPage: React.FC = () => {
       } else {
         await register(formData.email, formData.password, formData.name || undefined);
       }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred. Please try again.');
+    } catch (err: unknown) {
+      setError((err as Error).message || 'An error occurred. Please try again.');
     }
   };
 
@@ -50,12 +52,7 @@ export const LoginPage: React.FC = () => {
       <div className="w-full max-w-md">
         {/* Back to Home */}
         <div className="mb-8 flex justify-between items-center">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Home
-            </Link>
-          </Button>
+          <BackToLanding variant="arrow" showText={true} />
           <ThemeToggle />
         </div>
 
@@ -142,7 +139,7 @@ export const LoginPage: React.FC = () => {
               >
                 {isLoading ? (
                   <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
                     {isLoginMode ? 'Signing In...' : 'Creating Account...'}
                   </div>
                 ) : (

@@ -1,19 +1,23 @@
-import { XanoClient } from '@xano/js-sdk';
+import { XanoClient } from "@xano/js-sdk";
 
 // Configuration
 const XANO_CONFIG = {
-  apiUrl: import.meta.env.VITE_XANO_API_URL || '',
-  realtimeHash: import.meta.env.VITE_XANO_REALTIME_HASH || '',
-  realtimeEnabled: import.meta.env.VITE_XANO_REALTIME_ENABLED === 'true',
+  apiUrl: import.meta.env.VITE_XANO_API_URL || "",
+  realtimeHash: import.meta.env.VITE_XANO_REALTIME_HASH || "",
+  realtimeEnabled: import.meta.env.VITE_XANO_REALTIME_ENABLED === "true",
 };
 
 // Validate configuration
 if (!XANO_CONFIG.apiUrl) {
-  throw new Error('VITE_XANO_API_URL is required. Please check your .env file.');
+  throw new Error(
+    "VITE_XANO_API_URL is required. Please check your .env file."
+  );
 }
 
 if (XANO_CONFIG.realtimeEnabled && !XANO_CONFIG.realtimeHash) {
-  console.warn('VITE_XANO_REALTIME_HASH is required for realtime features. Realtime will be disabled.');
+  console.warn(
+    "VITE_XANO_REALTIME_HASH is required for realtime features. Realtime will be disabled."
+  );
   XANO_CONFIG.realtimeEnabled = false;
 }
 
@@ -24,13 +28,13 @@ export const xano = new XanoClient({
 });
 
 // Auth token management
-const AUTH_TOKEN_KEY = 'xano_auth_token';
+const AUTH_TOKEN_KEY = "xano_auth_token";
 
 export const authTokenManager = {
   get: (): string | null => {
     return localStorage.getItem(AUTH_TOKEN_KEY);
   },
-  
+
   set: (token: string): void => {
     localStorage.setItem(AUTH_TOKEN_KEY, token);
     xano.setAuthToken(token);
@@ -39,7 +43,7 @@ export const authTokenManager = {
       xano.setRealtimeAuthToken(token);
     }
   },
-  
+
   remove: (): void => {
     localStorage.removeItem(AUTH_TOKEN_KEY);
     xano.setAuthToken(null);
@@ -47,7 +51,7 @@ export const authTokenManager = {
       xano.setRealtimeAuthToken(null);
     }
   },
-  
+
   init: (): void => {
     const token = authTokenManager.get();
     if (token) {
@@ -56,7 +60,7 @@ export const authTokenManager = {
         xano.setRealtimeAuthToken(token);
       }
     }
-  }
+  },
 };
 
 // Initialize auth token on module load
@@ -80,6 +84,9 @@ export interface User {
   name?: string;
   created_at: number;
   realtimeid?: string; // User's realtime ID for channel subscriptions
+  interests?: string[]; // User's interests for tarot readings
+  birth_place?: string; // User's birth place
+  birth_date?: number; // User's birth date as epoch timestamp in milliseconds
 }
 
 export interface AuthResponse {
@@ -90,93 +97,132 @@ export interface AuthResponse {
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const response = await xano.post('/auth/login', credentials);
+      const response = await xano.post("/auth/login", credentials);
       const responseBody = response.getBody();
-      
+
       // Extract token - Xano may return it as 'token' or 'authToken'
       const token = responseBody.authToken || responseBody.token;
-      
+
       if (!token) {
-        console.error('No token found in response. Response keys:', Object.keys(responseBody));
-        throw new Error('No authentication token received from server');
+        console.error(
+          "No token found in response. Response keys:",
+          Object.keys(responseBody)
+        );
+        throw new Error("No authentication token received from server");
       }
-      
+
       // Set the token immediately
       authTokenManager.set(token);
-      
+
       return { authToken: token };
     } catch (error: any) {
-      console.error('Login error:', error);
-      
+      console.error("Login error:", error);
+
       // Handle Xano SDK errors properly
       if (error.getResponse) {
         const errorResponse = error.getResponse();
         const errorBody = errorResponse.getBody();
-        console.error('Error response body:', errorBody);
-        console.error('Error status code:', errorResponse.getStatusCode());
-        
+        console.error("Error response body:", errorBody);
+        console.error("Error status code:", errorResponse.getStatusCode());
+
         // Throw a more user-friendly error message
-        throw new Error(errorBody.message || error.message || 'Login failed');
+        throw new Error(errorBody.message || error.message || "Login failed");
       }
-      
+
       throw error;
     }
   },
 
   async register(credentials: RegisterCredentials): Promise<AuthResponse> {
     try {
-      const response = await xano.post('/auth/signup', credentials);
+      const response = await xano.post("/auth/signup", credentials);
       const responseBody = response.getBody();
-      
+
       // Extract token - Xano may return it as 'token' or 'authToken'
       const token = responseBody.authToken || responseBody.token;
-      
+
       if (!token) {
-        console.error('No token found in response. Response keys:', Object.keys(responseBody));
-        throw new Error('No authentication token received from server');
+        console.error(
+          "No token found in response. Response keys:",
+          Object.keys(responseBody)
+        );
+        throw new Error("No authentication token received from server");
       }
-      
+
       // Set the token immediately
       authTokenManager.set(token);
-      
+
       return { authToken: token };
     } catch (error: any) {
-      console.error('Registration error:', error);
-      
+      console.error("Registration error:", error);
+
       // Handle Xano SDK errors properly
       if (error.getResponse) {
         const errorResponse = error.getResponse();
         const errorBody = errorResponse.getBody();
-        console.error('Error response body:', errorBody);
-        console.error('Error status code:', errorResponse.getStatusCode());
-        
+        console.error("Error response body:", errorBody);
+        console.error("Error status code:", errorResponse.getStatusCode());
+
         // Throw a more user-friendly error message
-        throw new Error(errorBody.message || error.message || 'Registration failed');
+        throw new Error(
+          errorBody.message || error.message || "Registration failed"
+        );
       }
-      
+
       throw error;
     }
   },
 
   async me(): Promise<User> {
     try {
-      const response = await xano.get('/auth/me');
+      const response = await xano.get("/auth/me");
       const responseBody = response.getBody();
       return responseBody;
     } catch (error: any) {
-      console.error('Get user error:', error);
-      
+      console.error("Get user error:", error);
+
       // Handle Xano SDK errors properly
       if (error.getResponse) {
         const errorResponse = error.getResponse();
         const errorBody = errorResponse.getBody();
-        console.error('Error response body:', errorBody);
-        console.error('Error status code:', errorResponse.getStatusCode());
-        
+        console.error("Error response body:", errorBody);
+        console.error("Error status code:", errorResponse.getStatusCode());
+
         // Throw a more user-friendly error message
-        throw new Error(errorBody.message || error.message || 'Failed to get user data');
+        throw new Error(
+          errorBody.message || error.message || "Failed to get user data"
+        );
       }
-      
+
+      throw error;
+    }
+  },
+
+  async updateProfile(profileData: {
+    interests?: string[];
+    birth_place?: string;
+    birth_date?: number;
+  }): Promise<User> {
+    try {
+      const response = await xano.patch("/auth/me", profileData);
+      const responseBody = response.getBody();
+      return responseBody;
+    } catch (error: any) {
+      console.error("Update profile error:", error);
+
+      // Handle Xano SDK errors properly
+      if (error.getResponse) {
+        const errorResponse = error.getResponse();
+        const errorBody = errorResponse.getBody();
+        console.error("Error response body:", errorBody);
+        console.error("Error status code:", errorResponse.getStatusCode());
+
+        // Throw a more user-friendly error message
+        throw new Error(
+          errorBody.message || error.message || "Failed to update profile"
+        );
+      }
+
       throw error;
     }
   },
@@ -187,7 +233,7 @@ export const authService = {
 
   isAuthenticated(): boolean {
     return !!authTokenManager.get();
-  }
+  },
 };
 
 // Global realtime client to reuse connections
@@ -198,17 +244,17 @@ let activeSubscriptions: Map<string, any> = new Map(); // Track active subscript
 // Realtime service (optional)
 export const realtimeService = {
   isEnabled: (): boolean => XANO_CONFIG.realtimeEnabled,
-  
+
   // Initialize realtime client connection
   initConnection: async () => {
     if (globalRealtimeClient) {
       return globalRealtimeClient;
     }
-    
+
     if (connectionPromise) {
       return connectionPromise;
     }
-    
+
     connectionPromise = new Promise((resolve, reject) => {
       try {
         // Create a new XanoClient specifically for realtime with the connection hash
@@ -216,36 +262,40 @@ export const realtimeService = {
           apiGroupBaseUrl: XANO_CONFIG.apiUrl,
           realtimeConnectionHash: XANO_CONFIG.realtimeHash,
         });
-        
+
         // Set auth tokens if available
         const authToken = authTokenManager.get();
         if (authToken) {
           realtimeClient.setAuthToken(authToken);
           realtimeClient.setRealtimeAuthToken(authToken);
         }
-        
+
         globalRealtimeClient = realtimeClient;
         resolve(realtimeClient);
       } catch (error) {
         reject(error);
       }
     });
-    
+
     return connectionPromise;
   },
-  
+
   // Retry creating channel with exponential backoff
-  createChannelWithRetry: async (client: any, channelName: string, maxRetries = 5): Promise<any> => {
+  createChannelWithRetry: async (
+    client: any,
+    channelName: string,
+    maxRetries = 5
+  ): Promise<any> => {
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
         const channel = client.channel(channelName);
-        console.log('Channel created successfully');
+        console.log("Channel created successfully");
         return channel;
       } catch (error: any) {
-        if (error.message && error.message.includes('CONNECTING')) {
+        if (error.message && error.message.includes("CONNECTING")) {
           const delay = Math.min(1000 * Math.pow(2, attempt), 5000); // Exponential backoff, max 5s
           console.log(`WebSocket still connecting, retrying in ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise((resolve) => setTimeout(resolve, delay));
           continue;
         } else {
           // Different error, don't retry
@@ -258,101 +308,114 @@ export const realtimeService = {
 
   subscribe: async (channelName: string, callback: (data: any) => void) => {
     if (!XANO_CONFIG.realtimeEnabled) {
-      console.warn('Realtime is disabled. Enable it in your .env file.');
+      console.warn("Realtime is disabled. Enable it in your .env file.");
       return null;
     }
-    
+
     if (!XANO_CONFIG.realtimeHash) {
-      console.warn('Realtime connection hash is missing. Check your .env file.');
+      console.warn(
+        "Realtime connection hash is missing. Check your .env file."
+      );
       return null;
     }
-    
+
     // Check if we already have an active subscription for this channel
     if (activeSubscriptions.has(channelName)) {
-      console.warn(`Already subscribed to channel: ${channelName}. Returning existing subscription.`);
+      console.warn(
+        `Already subscribed to channel: ${channelName}. Returning existing subscription.`
+      );
       return activeSubscriptions.get(channelName);
     }
-    
+
     try {
       // Wait for the client to be ready
-      console.log('Initializing realtime connection...');
+      console.log("Initializing realtime connection...");
       const realtimeClient = await realtimeService.initConnection();
-      
-      console.log('Creating realtime channel with retry logic:', channelName);
-      
+
+      console.log("Creating realtime channel with retry logic:", channelName);
+
       // Create the channel with retry logic for WebSocket state issues
-      const channel = await realtimeService.createChannelWithRetry(realtimeClient, channelName);
-      
+      const channel = await realtimeService.createChannelWithRetry(
+        realtimeClient,
+        channelName
+      );
+
       // Track connection state
       let isDestroyed = false;
       let connectionEstablished = false;
-      
+
       // Add error handling for channel events
       channel.on(
         (action: any) => {
           try {
             // Mark connection as established when we receive the first action
-            if (!connectionEstablished && action.action === 'connection_status') {
+            if (
+              !connectionEstablished &&
+              action.action === "connection_status"
+            ) {
               connectionEstablished = true;
-              console.log('Realtime connection established for channel:', channelName);
+              console.log(
+                "Realtime connection established for channel:",
+                channelName
+              );
             }
             callback(action);
           } catch (error) {
-            console.error('Error processing realtime action:', error);
+            console.error("Error processing realtime action:", error);
           }
         },
         (error: any) => {
-          console.error('Realtime channel error:', error);
+          console.error("Realtime channel error:", error);
         }
       );
-      
+
       const subscription = {
         channel,
         client: realtimeClient,
         channelName,
         destroy: () => {
           if (isDestroyed) {
-            console.warn('Realtime subscription already destroyed');
+            console.warn("Realtime subscription already destroyed");
             return;
           }
-          
+
           isDestroyed = true;
-          console.log('Destroying realtime channel:', channelName);
-          
+          console.log("Destroying realtime channel:", channelName);
+
           // Remove from active subscriptions
           activeSubscriptions.delete(channelName);
-          
+
           try {
             channel.destroy();
           } catch (error) {
-            console.warn('Error during realtime cleanup:', error);
+            console.warn("Error during realtime cleanup:", error);
           }
-        }
+        },
       };
-      
+
       // Store the subscription
       activeSubscriptions.set(channelName, subscription);
-      
+
       return subscription;
     } catch (error) {
-      console.error('Realtime subscription error:', error);
+      console.error("Realtime subscription error:", error);
       return null;
     }
   },
-  
+
   unsubscribe: (subscription: any) => {
     if (!XANO_CONFIG.realtimeEnabled || !subscription) return;
-    
+
     try {
-      if (subscription && typeof subscription.destroy === 'function') {
+      if (subscription && typeof subscription.destroy === "function") {
         subscription.destroy();
       }
     } catch (error) {
-      console.error('Realtime unsubscription error:', error);
+      console.error("Realtime unsubscription error:", error);
       // Don't rethrow - this is cleanup code
     }
   },
-  
+
   // Reset connection (useful for auth changes)
   resetConnection: () => {
     // Clean up all active subscriptions
@@ -361,14 +424,17 @@ export const realtimeService = {
       try {
         subscription.destroy();
       } catch (error) {
-        console.warn(`Error cleaning up subscription for ${channelName}:`, error);
+        console.warn(
+          `Error cleaning up subscription for ${channelName}:`,
+          error
+        );
       }
     });
     activeSubscriptions.clear();
-    
+
     globalRealtimeClient = null;
     connectionPromise = null;
-  }
+  },
 };
 
 // Export configuration for debugging
