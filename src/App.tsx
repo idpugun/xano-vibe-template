@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -7,7 +6,6 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
-import { CardDisplayPage } from '@/pages/CardDisplayPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 
 function App() {
@@ -18,7 +16,6 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/cards" element={<CardDisplayPage />} />
           <Route 
             path="/dashboard" 
             element={

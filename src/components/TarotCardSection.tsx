@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Shuffle } from 'lucide-react';
 import type { ReadingMode } from './ReadingModeSelector';
 
@@ -97,12 +97,16 @@ interface TarotCardSectionProps {
   readingMode: ReadingMode;
   selectedCards: Set<number>;
   onSelectedCardsChange: (cards: Set<number>) => void;
+  onSelectedCardDataChange?: (cardData: TarotCardData[]) => void;
+  shuffleTrigger?: number; // When this changes, trigger shuffle
 }
 
 export const TarotCardSection: React.FC<TarotCardSectionProps> = ({ 
   readingMode, 
   selectedCards, 
-  onSelectedCardsChange 
+  onSelectedCardsChange,
+  onSelectedCardDataChange,
+  shuffleTrigger
 }) => {
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
   const [cardsData, setCardsData] = useState<TarotCardData[]>([]);
@@ -128,11 +132,65 @@ export const TarotCardSection: React.FC<TarotCardSectionProps> = ({
 
   const selectionLimit = getSelectionLimit();
 
+  const generateCards = (count: number) => {
+    return Array.from({ length: count }, (_, index) => {
+      // Use shuffle key to create different random patterns
+      const randomSeed = (shuffleKey * 1000) + index;
+      const cardIndex = (randomSeed + index) % cardsData.length;
+      return {
+        id: index,
+        cardData: cardsData[cardIndex]
+      };
+    });
+  };
+
+  // Generate full pile of cards (60 cards like before)
+  const displayCards = generateCards(60);
+
   // Reset flipped cards and preview when reading mode changes
+  const prevReadingMode = useRef<ReadingMode>(readingMode);
   useEffect(() => {
+    if (prevReadingMode.current !== readingMode) {
+      setFlippedCards(new Set());
+      setPreviewCard(null);
+      prevReadingMode.current = readingMode;
+    }
+  }, [readingMode]);
+
+  const handleShuffle = useCallback(() => {
+    setIsShuffling(true);
+    // Clear current selection and flipped cards
+    onSelectedCardsChange(new Set());
     setFlippedCards(new Set());
     setPreviewCard(null);
-  }, [readingMode]);
+    
+    // Trigger shuffle by updating the key
+    setShuffleKey(prev => prev + 1);
+    
+    // Reset shuffling state after animation
+    setTimeout(() => {
+      setIsShuffling(false);
+    }, 1000);
+  }, [onSelectedCardsChange]);
+
+  // Notify parent of selected card data changes
+  useEffect(() => {
+    if (onSelectedCardDataChange && selectedCards.size > 0) {
+      const selectedCardData = Array.from(selectedCards).map(cardId => {
+        const displayCard = displayCards.find(card => card.id === cardId);
+        return displayCard?.cardData;
+      }).filter(Boolean) as TarotCardData[];
+      
+      onSelectedCardDataChange(selectedCardData);
+    }
+  }, [selectedCards, displayCards, onSelectedCardDataChange]);
+
+  // Trigger shuffle when shuffleTrigger changes
+  useEffect(() => {
+    if (shuffleTrigger !== undefined) {
+      handleShuffle();
+    }
+  }, [shuffleTrigger, handleShuffle]);
 
   // Fetch tarot cards data from API
   useEffect(() => {
@@ -200,37 +258,6 @@ export const TarotCardSection: React.FC<TarotCardSectionProps> = ({
       }
     }
   };
-
-  const handleShuffle = () => {
-    setIsShuffling(true);
-    // Clear current selection and flipped cards
-    onSelectedCardsChange(new Set());
-    setFlippedCards(new Set());
-    setPreviewCard(null);
-    
-    // Trigger shuffle by updating the key
-    setShuffleKey(prev => prev + 1);
-    
-    // Reset shuffling state after animation
-    setTimeout(() => {
-      setIsShuffling(false);
-    }, 1000);
-  };
-
-  const generateCards = (count: number) => {
-    return Array.from({ length: count }, (_, index) => {
-      // Use shuffle key to create different random patterns
-      const randomSeed = (shuffleKey * 1000) + index;
-      const cardIndex = (randomSeed + index) % cardsData.length;
-      return {
-        id: index,
-        cardData: cardsData[cardIndex]
-      };
-    });
-  };
-
-  // Generate full pile of cards (60 cards like before)
-  const displayCards = generateCards(60);
 
   if (loading) {
     return (

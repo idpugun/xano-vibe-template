@@ -126,11 +126,6 @@ export const LandingPage: React.FC = () => {
                 เริ่มต้นทำนายดวง <ArrowRight className="ml-4 h-6 w-6" />
               </Link>
             </Button>
-            <Button asChild size="lg" className="text-xl px-16 py-8 h-auto rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 transform hover:scale-105">
-              <Link to="/cards">
-                ดูไพ่ทาโรต์ <ArrowRight className="ml-4 h-6 w-6" />
-              </Link>
-            </Button>
           </div>
 
           {/* Stats */}
@@ -335,11 +330,6 @@ export const LandingPage: React.FC = () => {
             <Button asChild size="lg" className="text-xl px-16 py-8 h-auto rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transform hover:scale-105">
               <Link to="/dashboard">
                 เริ่มทำนายดวงฟรี <ArrowRight className="ml-4 h-6 w-6" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" className="text-xl px-16 py-8 h-auto rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 transform hover:scale-105">
-              <Link to="/cards">
-                ดูไพ่ทาโรต์ <ArrowRight className="ml-4 h-6 w-6" />
               </Link>
             </Button>
               </div>

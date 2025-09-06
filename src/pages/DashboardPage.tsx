@@ -5,22 +5,21 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { realtimeService, authService, tarotService } from '@/lib/xano';
-import { LogOut, User, Activity, Database, Menu, X, Eye, History, Settings } from 'lucide-react';
+import { LogOut, User, Activity, Database, Menu, X, Settings } from 'lucide-react';
 import { TarotCardSection } from '@/components/TarotCardSection';
 import { BackToLanding } from '@/components/BackToLanding';
 import { ReadingModeSelector, type ReadingMode } from '@/components/ReadingModeSelector';
-import { Link, useNavigate } from 'react-router-dom';
+import { TarotReadingModal } from '@/components/TarotReadingModal';
+import { Link } from 'react-router-dom';
 
 export const DashboardPage: React.FC = () => {
   const { user, logout, isLoading } = useAuth();
-  const navigate = useNavigate();
   const [realtimeConnected, setRealtimeConnected] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [realtimeLoading, setRealtimeLoading] = useState(false);
   const [readingMode, setReadingMode] = useState<ReadingMode>('single');
   const [selectedCards, setSelectedCards] = useState<Set<number>>(new Set());
-  const [isSubmittingReading, setIsSubmittingReading] = useState(false);
-  const [cardsData, setCardsData] = useState<Array<{
+  const [selectedCardData, setSelectedCardData] = useState<Array<{
     id: number;
     name: string;
     fortune_telling: string[];
@@ -29,47 +28,54 @@ export const DashboardPage: React.FC = () => {
     shadow_meaning: string[];
     img_url: string;
   }>>([]);
+  const [isSubmittingReading, setIsSubmittingReading] = useState(false);
+  const [shuffleTrigger, setShuffleTrigger] = useState(0);
+  const [showReadingModal, setShowReadingModal] = useState(false);
+  const [readingResult, setReadingResult] = useState<{
+    id: number;
+    user_id: number;
+    reading_mode: 'single' | 'three' | 'celtic';
+    selected_cards: number[];
+    card_data: Array<{
+      id: number;
+      name: string;
+      fortune_telling: string[];
+      keyword: string[];
+      light_meaning: string[];
+      shadow_meaning: string[];
+      img_url: string;
+    }>;
+    reading_timestamp: number;
+    created_at: string;
+    result?: string;
+  } | null>(null);
 
   // Function to check if selection matches reading mode requirement
-  const isSelectionValid = () => {
+  const isSelectionValid = useCallback(() => {
     const requiredCards = readingMode === 'single' ? 1 : readingMode === 'three' ? 3 : 10;
     return selectedCards.size === requiredCards;
-  };
+  }, [readingMode, selectedCards.size]);
 
-  // Fetch tarot cards data
-  useEffect(() => {
-    const fetchCards = async () => {
-      try {
-        const response = await fetch('https://xi5k-kqun-rjxc.n7e.xano.io/api:bhawqcMo/TarotCard');
-        if (response.ok) {
-          const data = await response.json();
-          setCardsData(data);
-        }
-      } catch (error) {
-        console.error('Error fetching cards:', error);
-      }
-    };
-
-    fetchCards();
-  }, []);
-
-  // Reset selected cards when reading mode changes
-  useEffect(() => {
-    setSelectedCards(new Set());
-  }, [readingMode]);
 
   // Handle reading submission
-  const handleSubmitReading = async () => {
+  const handleSubmitReading = useCallback(async () => {
     if (!user || !isSelectionValid()) return;
 
     try {
       setIsSubmittingReading(true);
-      
-      // Get selected card data
-      const selectedCardData = Array.from(selectedCards).map(cardId => {
-        const card = cardsData.find(c => c.id === cardId);
-        return card || { id: cardId, name: `Card ${cardId + 1}` };
+
+      // Show modal immediately with loading state
+      setReadingResult({
+        id: Date.now(), // Generate a temporary ID
+        user_id: user.id,
+        reading_mode: readingMode,
+        selected_cards: Array.from(selectedCards),
+        card_data: selectedCardData,
+        reading_timestamp: Date.now(),
+        created_at: new Date().toISOString(),
+        result: undefined // Will be set after API call
       });
+      setShowReadingModal(true);
 
       // Prepare reading data
       const readingData = {
@@ -88,16 +94,11 @@ export const DashboardPage: React.FC = () => {
         duration: 3000,
       });
 
-      // Navigate to results page with the reading data
-      navigate('/cards', { 
-        state: { 
-          readingResult: {
-            ...result,
-            card_data: selectedCardData,
-            reading_timestamp: readingData.reading_timestamp
-          }
-        } 
-      });
+      // Update modal with reading results
+      setReadingResult(prev => prev ? {
+        ...prev,
+        result: result.result || result // Handle both possible result structures
+      } : null);
       
     } catch (error) {
       console.error('Error submitting reading:', error);
@@ -105,10 +106,39 @@ export const DashboardPage: React.FC = () => {
         icon: '❌',
         duration: 4000,
       });
+      // Close modal on error
+      setShowReadingModal(false);
+      setReadingResult(null);
     } finally {
       setIsSubmittingReading(false);
     }
-  };
+  }, [user, isSelectionValid, selectedCards, selectedCardData, readingMode]);
+
+  // Reset selected cards when reading mode changes
+  const prevReadingMode = useRef<ReadingMode>(readingMode);
+  useEffect(() => {
+    if (prevReadingMode.current !== readingMode) {
+      setSelectedCards(new Set());
+      setSelectedCardData([]);
+      prevReadingMode.current = readingMode;
+      // Reset submitted selection when mode changes
+      submittedSelectionRef.current = '';
+    }
+  }, [readingMode]);
+
+  // Auto-trigger reading when selection is valid
+  useEffect(() => {
+    if (isSelectionValid() && !isSubmittingReading && selectedCards.size > 0) {
+      // Create a unique key for the current selection
+      const selectionKey = `${readingMode}-${Array.from(selectedCards).sort().join(',')}`;
+      
+      // Only submit if this selection hasn't been submitted yet
+      if (submittedSelectionRef.current !== selectionKey) {
+        submittedSelectionRef.current = selectionKey;
+        handleSubmitReading();
+      }
+    }
+  }, [isSelectionValid, isSubmittingReading, selectedCards, readingMode, handleSubmitReading]);
 
   // Refs to store subscription and interval for cleanup
   const realtimeSubscriptionRef = useRef<unknown>(null);
@@ -116,6 +146,9 @@ export const DashboardPage: React.FC = () => {
   
   // Track processed messages to prevent duplicates
   const processedMessagesRef = useRef<Set<string>>(new Set());
+  
+  // Track if reading has been submitted for current selection to prevent loops
+  const submittedSelectionRef = useRef<string>('');
 
   // Cleanup function for realtime connections
   const cleanupRealtime = useCallback(() => {
@@ -254,6 +287,17 @@ export const DashboardPage: React.FC = () => {
     logout();
   };
 
+  // Handle new reading - reset selection and close modal
+  const handleNewReading = () => {
+    setSelectedCards(new Set());
+    setSelectedCardData([]);
+    setShowReadingModal(false);
+    setReadingResult(null);
+    setShuffleTrigger(prev => prev + 1);
+    // Reset submitted selection to allow new readings
+    submittedSelectionRef.current = '';
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -388,46 +432,12 @@ export const DashboardPage: React.FC = () => {
           readingMode={readingMode} 
           selectedCards={selectedCards}
           onSelectedCardsChange={setSelectedCards}
+          onSelectedCardDataChange={setSelectedCardData}
+          shuffleTrigger={shuffleTrigger}
         />
         
-        {/* Action Buttons */}
+        {/* Selection Status */}
         <div className="flex flex-col items-center gap-6 mt-12">
-          <div className="flex gap-6">
-            <Button 
-              size="lg" 
-              disabled={!isSelectionValid() || isSubmittingReading}
-              onClick={handleSubmitReading}
-              className={`px-8 py-4 text-lg transition-all duration-300 ${
-                isSelectionValid() && !isSubmittingReading
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700' 
-                  : 'bg-muted text-muted-foreground cursor-not-allowed'
-              }`}
-            >
-              {isSubmittingReading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
-                  กำลังบันทึก...
-                </>
-              ) : (
-                <>
-                  <Eye className="mr-2 h-5 w-5" />
-                  {readingMode === 'single' && 'ดูดวงใบเดียว'}
-                  {readingMode === 'three' && 'ดูดวง 3 ใบ'}
-                  {readingMode === 'celtic' && 'ดูดวง Celtic Cross'}
-                </>
-              )}
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="px-8 py-4 text-lg"
-            >
-              <History className="mr-2 h-5 w-5" />
-              ประวัติคำทำนาย
-            </Button>
-          </div>
-          
-          {/* Selection Status */}
           {!isSelectionValid() && (
             <div className="text-center">
               <p className="text-muted-foreground text-sm">
@@ -437,6 +447,14 @@ export const DashboardPage: React.FC = () => {
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 เลือกแล้ว: {selectedCards.size} / {readingMode === 'single' ? 1 : readingMode === 'three' ? 3 : 10}
+              </p>
+            </div>
+          )}
+          
+          {isSelectionValid() && !isSubmittingReading && (
+            <div className="text-center">
+              <p className="text-green-600 dark:text-green-400 text-sm font-medium">
+                ✓ พร้อมทำนาย - กำลังประมวลผล...
               </p>
             </div>
           )}
@@ -458,6 +476,22 @@ export const DashboardPage: React.FC = () => {
           aria-label="Close menu"
         />
       )}
+
+      {/* Tarot Reading Modal */}
+      <TarotReadingModal
+        isOpen={showReadingModal}
+        onClose={() => {
+          setShowReadingModal(false);
+          // Reset everything and shuffle cards
+          setSelectedCards(new Set());
+          setSelectedCardData([]);
+          setShuffleTrigger(prev => prev + 1);
+          // Reset submitted selection when modal is closed
+          submittedSelectionRef.current = '';
+        }}
+        readingResult={readingResult}
+        onNewReading={handleNewReading}
+      />
     </div>
   );
 };
