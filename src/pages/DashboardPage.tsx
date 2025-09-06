@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { realtimeService, authService } from '@/lib/xano';
-import { LogOut, User, Activity, Database, Menu, X, Eye, History } from 'lucide-react';
+import { LogOut, User, Activity, Database, Menu, X, Eye, History, Settings, Home } from 'lucide-react';
 import { TarotCardSection } from '@/components/TarotCardSection';
+import { Link } from 'react-router-dom';
 
 export const DashboardPage: React.FC = () => {
   const { user, logout, isLoading } = useAuth();
@@ -178,6 +179,18 @@ export const DashboardPage: React.FC = () => {
 
             {/* Realtime Status & Menu */}
             <div className="flex items-center space-x-4">
+              {/* Home Button */}
+              <Link to="/">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 px-3"
+                >
+                  <Home className="h-4 w-4 mr-2" />
+                  หน้าแรก
+                </Button>
+              </Link>
+              
               {/* Theme Toggle */}
               <ThemeToggle />
               
@@ -237,6 +250,14 @@ export const DashboardPage: React.FC = () => {
 
                     {/* Menu Items */}
                     <div className="py-2">
+                      <Link
+                        to="/settings"
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-secondary/50 flex items-center space-x-2"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <Settings className="h-4 w-4" />
+                        <span>การตั้งค่า</span>
+                      </Link>
                       {realtimeService.isEnabled() && realtimeConnected && (
                         <button
                           type="button"

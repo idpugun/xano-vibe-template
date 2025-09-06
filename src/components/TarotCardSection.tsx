@@ -1,5 +1,6 @@
 import type React from 'react';
 import { useState, useEffect } from 'react';
+import { Shuffle } from 'lucide-react';
 
 interface TarotCardData {
   id: number;
@@ -98,6 +99,8 @@ export const TarotCardSection: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [previewCard, setPreviewCard] = useState<TarotCardData | null>(null);
+  const [shuffleKey, setShuffleKey] = useState(0);
+  const [isShuffling, setIsShuffling] = useState(false);
 
   // Fetch tarot cards data from API
   useEffect(() => {
@@ -150,9 +153,27 @@ export const TarotCardSection: React.FC = () => {
     }
   };
 
+  const handleShuffle = () => {
+    setIsShuffling(true);
+    // Clear current selection and flipped cards
+    setSelectedCard(null);
+    setFlippedCards(new Set());
+    setPreviewCard(null);
+    
+    // Trigger shuffle by updating the key
+    setShuffleKey(prev => prev + 1);
+    
+    // Reset shuffling state after animation
+    setTimeout(() => {
+      setIsShuffling(false);
+    }, 1000);
+  };
+
   const generateCards = (startId: number, count: number) => {
     return Array.from({ length: count }, (_, index) => {
-      const cardIndex = (startId + index) % cardsData.length;
+      // Use shuffle key to create different random patterns
+      const randomSeed = (shuffleKey * 1000) + (startId + index);
+      const cardIndex = (randomSeed + index) % cardsData.length;
       return {
         id: startId + index,
         cardData: cardsData[cardIndex]
@@ -215,6 +236,25 @@ export const TarotCardSection: React.FC = () => {
           คลิกที่ไพ่เพื่อเปิดดูคำทำนาย (คลิกได้ครั้งละ 1 ใบ)
         </p>
         
+        {/* Shuffle Button */}
+        <div className="flex justify-center mb-8">
+          <button
+            type="button"
+            onClick={handleShuffle}
+            disabled={isShuffling}
+            className={`
+              flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-300
+              ${isShuffling 
+                ? 'bg-muted text-muted-foreground cursor-not-allowed' 
+                : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+              }
+            `}
+          >
+            <Shuffle className={`h-5 w-5 ${isShuffling ? 'animate-spin' : ''}`} />
+            {isShuffling ? 'กำลังสับไพ่...' : 'สับไพ่ใหม่'}
+          </button>
+        </div>
+        
         <div className="flex gap-8">
           {/* Card Layout */}
           <div className="flex-1">
@@ -232,8 +272,8 @@ export const TarotCardSection: React.FC = () => {
             const baseX = (gridX / (gridSize - 1)) * 80 + 10; // 10-90% range
             const baseY = (gridY / (gridSize - 1)) * 80 + 10; // 10-90% range
             
-            // Add slight random offset to break grid pattern
-            const seed = card.id * 1.618;
+            // Add shuffle key to create different patterns each time
+            const seed = (card.id * 1.618) + (shuffleKey * 100);
             const offsetX = (Math.sin(seed) * 8) + (Math.cos(seed * 1.3) * 4); // ±12px offset
             const offsetY = (Math.cos(seed * 1.7) * 8) + (Math.sin(seed * 2.1) * 4); // ±12px offset
             
@@ -245,8 +285,8 @@ export const TarotCardSection: React.FC = () => {
             
             return (
               <div
-                key={card.id}
-                className="absolute transform -translate-x-1/2 -translate-y-1/2"
+                key={`${card.id}-${shuffleKey}`}
+                className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-1000 ease-in-out"
                 style={{
                   left: `${x}%`,
                   top: `${y}%`,
