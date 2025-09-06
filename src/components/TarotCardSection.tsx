@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Shuffle } from 'lucide-react';
 import type { ReadingMode } from './ReadingModeSelector';
 
@@ -97,7 +97,6 @@ interface TarotCardSectionProps {
   readingMode: ReadingMode;
   selectedCards: Set<number>;
   onSelectedCardsChange: (cards: Set<number>) => void;
-  onSelectedCardDataChange?: (cardData: TarotCardData[]) => void;
   shuffleTrigger?: number; // When this changes, trigger shuffle
   cardsData: TarotCardData[];
   loading: boolean;
@@ -108,7 +107,6 @@ export const TarotCardSection: React.FC<TarotCardSectionProps> = ({
   readingMode, 
   selectedCards, 
   onSelectedCardsChange,
-  onSelectedCardDataChange,
   shuffleTrigger,
   cardsData,
   loading,
@@ -135,8 +133,9 @@ export const TarotCardSection: React.FC<TarotCardSectionProps> = ({
 
   const selectionLimit = getSelectionLimit();
 
-  const generateCards = (count: number) => {
-    return Array.from({ length: count }, (_, index) => {
+  // Generate full pile of cards (60 cards like before) - memoized to prevent re-renders
+  const displayCards = useMemo(() => {
+    return Array.from({ length: 60 }, (_, index) => {
       // Use shuffle key to create different random patterns
       const randomSeed = (shuffleKey * 1000) + index;
       const cardIndex = (randomSeed + index) % cardsData.length;
@@ -145,10 +144,7 @@ export const TarotCardSection: React.FC<TarotCardSectionProps> = ({
         cardData: cardsData[cardIndex]
       };
     });
-  };
-
-  // Generate full pile of cards (60 cards like before)
-  const displayCards = generateCards(60);
+  }, [shuffleKey, cardsData]);
 
   // Reset flipped cards and preview when reading mode changes
   const prevReadingMode = useRef<ReadingMode>(readingMode);
@@ -176,24 +172,17 @@ export const TarotCardSection: React.FC<TarotCardSectionProps> = ({
     }, 1000);
   }, [onSelectedCardsChange]);
 
-  // Notify parent of selected card data changes
-  useEffect(() => {
-    if (onSelectedCardDataChange && selectedCards.size > 0) {
-      const selectedCardData = Array.from(selectedCards).map(cardId => {
-        const displayCard = displayCards.find(card => card.id === cardId);
-        return displayCard?.cardData;
-      }).filter(Boolean) as TarotCardData[];
-      
-      onSelectedCardDataChange(selectedCardData);
-    }
-  }, [selectedCards, displayCards, onSelectedCardDataChange]);
+
+  // Store the latest handleShuffle function in a ref to avoid circular dependencies
+  const handleShuffleRef = useRef(handleShuffle);
+  handleShuffleRef.current = handleShuffle;
 
   // Trigger shuffle when shuffleTrigger changes
   useEffect(() => {
     if (shuffleTrigger !== undefined) {
-      handleShuffle();
+      handleShuffleRef.current();
     }
-  }, [shuffleTrigger, handleShuffle]);
+  }, [shuffleTrigger]);
 
   // Cards data is now provided as props from parent component
 

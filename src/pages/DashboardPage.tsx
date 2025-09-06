@@ -19,15 +19,6 @@ export const DashboardPage: React.FC = () => {
   const [realtimeLoading, setRealtimeLoading] = useState(false);
   const [readingMode, setReadingMode] = useState<ReadingMode>('single');
   const [selectedCards, setSelectedCards] = useState<Set<number>>(new Set());
-  const [selectedCardData, setSelectedCardData] = useState<Array<{
-    id: number;
-    name: string;
-    fortune_telling: string[];
-    keyword: string[];
-    light_meaning: string[];
-    shadow_meaning: string[];
-    img_url: string;
-  }>>([]);
   const [isSubmittingReading, setIsSubmittingReading] = useState(false);
   const [shuffleTrigger, setShuffleTrigger] = useState(0);
   const [showReadingModal, setShowReadingModal] = useState(false);
@@ -67,6 +58,33 @@ export const DashboardPage: React.FC = () => {
     return selectedCards.size === requiredCards;
   }, [readingMode, selectedCards.size]);
 
+  // Function to get selected card data from selectedCards
+  const getSelectedCardData = useCallback(() => {
+    // We need to recreate the displayCards mapping to find the actual card data
+    // This matches the logic in TarotCardSection
+    const displayCards = Array.from({ length: 60 }, (_, index) => {
+      const randomSeed = (shuffleTrigger * 1000) + index;
+      const cardIndex = (randomSeed + index) % tarotCards.length;
+      return {
+        id: index,
+        cardData: tarotCards[cardIndex]
+      };
+    });
+
+    return Array.from(selectedCards).map(cardId => {
+      const displayCard = displayCards.find(card => card.id === cardId);
+      return displayCard?.cardData;
+    }).filter(Boolean) as Array<{
+      id: number;
+      name: string;
+      fortune_telling: string[];
+      keyword: string[];
+      light_meaning: string[];
+      shadow_meaning: string[];
+      img_url: string;
+    }>;
+  }, [selectedCards, tarotCards, shuffleTrigger]);
+
 
   // Handle reading submission
   const handleSubmitReading = useCallback(async () => {
@@ -75,13 +93,16 @@ export const DashboardPage: React.FC = () => {
     try {
       setIsSubmittingReading(true);
 
+      // Get selected card data
+      const cardData = getSelectedCardData();
+      
       // Show modal immediately with loading state
       setReadingResult({
         id: Date.now(), // Generate a temporary ID
         user_id: user.id,
         reading_mode: readingMode,
         selected_cards: Array.from(selectedCards),
-        card_data: selectedCardData,
+        card_data: cardData,
         reading_timestamp: Date.now(),
         created_at: new Date().toISOString(),
         result: undefined // Will be set after API call
@@ -93,9 +114,15 @@ export const DashboardPage: React.FC = () => {
         user,
         reading_mode: readingMode,
         selected_cards: Array.from(selectedCards),
-        card_data: selectedCardData,
+        card_data: cardData,
         reading_timestamp: Date.now()
       };
+
+      console.log('🔮 Submitting reading with data:', {
+        selectedCards: Array.from(selectedCards),
+        cardDataLength: cardData.length,
+        cardData: cardData.map(card => ({ id: card.id, name: card.name }))
+      });
 
       // Submit to API
       const result = await tarotService.submitReading(readingData);
@@ -123,33 +150,38 @@ export const DashboardPage: React.FC = () => {
     } finally {
       setIsSubmittingReading(false);
     }
-  }, [user, isSelectionValid, selectedCards, selectedCardData, readingMode]);
+  }, [user, isSelectionValid, selectedCards, getSelectedCardData, readingMode]);
 
   // Reset selected cards when reading mode changes
   const prevReadingMode = useRef<ReadingMode>(readingMode);
   useEffect(() => {
     if (prevReadingMode.current !== readingMode) {
       setSelectedCards(new Set());
-      setSelectedCardData([]);
       prevReadingMode.current = readingMode;
       // Reset submitted selection when mode changes
       submittedSelectionRef.current = '';
     }
   }, [readingMode]);
 
+  // Store the latest handleSubmitReading function in a ref to avoid circular dependencies
+  const handleSubmitReadingRef = useRef(handleSubmitReading);
+  handleSubmitReadingRef.current = handleSubmitReading;
+
   // Auto-trigger reading when selection is valid
   useEffect(() => {
-    if (isSelectionValid() && !isSubmittingReading && selectedCards.size > 0) {
+    // Don't trigger reading if modal is open or if we're in the middle of closing it
+    if (isSelectionValid() && !isSubmittingReading && selectedCards.size > 0 && !showReadingModal) {
       // Create a unique key for the current selection
       const selectionKey = `${readingMode}-${Array.from(selectedCards).sort().join(',')}`;
       
       // Only submit if this selection hasn't been submitted yet
       if (submittedSelectionRef.current !== selectionKey) {
         submittedSelectionRef.current = selectionKey;
-        handleSubmitReading();
+        // Call the latest handleSubmitReading function from ref
+        handleSubmitReadingRef.current();
       }
     }
-  }, [isSelectionValid, isSubmittingReading, selectedCards, readingMode, handleSubmitReading]);
+  }, [isSelectionValid, isSubmittingReading, selectedCards, readingMode, showReadingModal]);
 
   // Refs to store subscription and interval for cleanup
   const realtimeSubscriptionRef = useRef<unknown>(null);
@@ -322,7 +354,6 @@ export const DashboardPage: React.FC = () => {
   // Handle new reading - reset selection and close modal
   const handleNewReading = () => {
     setSelectedCards(new Set());
-    setSelectedCardData([]);
     setShowReadingModal(false);
     setReadingResult(null);
     setShuffleTrigger(prev => prev + 1);
@@ -464,7 +495,6 @@ export const DashboardPage: React.FC = () => {
           readingMode={readingMode} 
           selectedCards={selectedCards}
           onSelectedCardsChange={setSelectedCards}
-          onSelectedCardDataChange={setSelectedCardData}
           shuffleTrigger={shuffleTrigger}
           cardsData={tarotCards}
           loading={cardsLoading}
@@ -517,9 +547,9 @@ export const DashboardPage: React.FC = () => {
         isOpen={showReadingModal}
         onClose={() => {
           setShowReadingModal(false);
-          // Reset everything and shuffle cards
+          // Clear selected cards first to prevent useEffect from triggering
           setSelectedCards(new Set());
-          setSelectedCardData([]);
+          // Reset everything and shuffle cards
           setShuffleTrigger(prev => prev + 1);
           // Reset submitted selection when modal is closed
           submittedSelectionRef.current = '';
