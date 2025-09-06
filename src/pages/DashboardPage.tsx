@@ -49,6 +49,17 @@ export const DashboardPage: React.FC = () => {
     created_at: string;
     result?: string;
   } | null>(null);
+  const [tarotCards, setTarotCards] = useState<Array<{
+    id: number;
+    name: string;
+    fortune_telling: string[];
+    keyword: string[];
+    light_meaning: string[];
+    shadow_meaning: string[];
+    img_url: string;
+  }>>([]);
+  const [cardsLoading, setCardsLoading] = useState(true);
+  const [cardsError, setCardsError] = useState<string | null>(null);
 
   // Function to check if selection matches reading mode requirement
   const isSelectionValid = useCallback(() => {
@@ -149,6 +160,27 @@ export const DashboardPage: React.FC = () => {
   
   // Track if reading has been submitted for current selection to prevent loops
   const submittedSelectionRef = useRef<string>('');
+
+  // Fetch tarot cards once on component mount
+  useEffect(() => {
+    const fetchTarotCards = async () => {
+      try {
+        console.log('🃏 Fetching tarot cards from API...');
+        setCardsLoading(true);
+        setCardsError(null);
+        const cards = await tarotService.getTarotCards();
+        console.log('✅ Tarot cards loaded successfully:', cards.length, 'cards');
+        setTarotCards(cards);
+      } catch (error) {
+        console.error('❌ Error fetching tarot cards:', error);
+        setCardsError(error instanceof Error ? error.message : 'Failed to fetch tarot cards');
+      } finally {
+        setCardsLoading(false);
+      }
+    };
+
+    fetchTarotCards();
+  }, []); // Empty dependency array - only run once on mount
 
   // Cleanup function for realtime connections
   const cleanupRealtime = useCallback(() => {
@@ -434,6 +466,9 @@ export const DashboardPage: React.FC = () => {
           onSelectedCardsChange={setSelectedCards}
           onSelectedCardDataChange={setSelectedCardData}
           shuffleTrigger={shuffleTrigger}
+          cardsData={tarotCards}
+          loading={cardsLoading}
+          error={cardsError}
         />
         
         {/* Selection Status */}

@@ -99,6 +99,9 @@ interface TarotCardSectionProps {
   onSelectedCardsChange: (cards: Set<number>) => void;
   onSelectedCardDataChange?: (cardData: TarotCardData[]) => void;
   shuffleTrigger?: number; // When this changes, trigger shuffle
+  cardsData: TarotCardData[];
+  loading: boolean;
+  error: string | null;
 }
 
 export const TarotCardSection: React.FC<TarotCardSectionProps> = ({ 
@@ -106,12 +109,12 @@ export const TarotCardSection: React.FC<TarotCardSectionProps> = ({
   selectedCards, 
   onSelectedCardsChange,
   onSelectedCardDataChange,
-  shuffleTrigger
+  shuffleTrigger,
+  cardsData,
+  loading,
+  error
 }) => {
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
-  const [cardsData, setCardsData] = useState<TarotCardData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [previewCard, setPreviewCard] = useState<TarotCardData | null>(null);
   const [shuffleKey, setShuffleKey] = useState(0);
   const [isShuffling, setIsShuffling] = useState(false);
@@ -192,30 +195,7 @@ export const TarotCardSection: React.FC<TarotCardSectionProps> = ({
     }
   }, [shuffleTrigger, handleShuffle]);
 
-  // Fetch tarot cards data from API
-  useEffect(() => {
-    const fetchCards = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('https://xi5k-kqun-rjxc.n7e.xano.io/api:bhawqcMo/TarotCard');
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        setCardsData(data);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching tarot cards:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch cards');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCards();
-  }, []);
+  // Cards data is now provided as props from parent component
 
   const handleCardClick = (cardId: number) => {
     // Find the card data

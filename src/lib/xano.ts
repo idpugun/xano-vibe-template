@@ -439,6 +439,26 @@ export const realtimeService = {
 
 // Tarot reading service
 export const tarotService = {
+  async getTarotCards(): Promise<any[]> {
+    try {
+      console.log("🌐 API Call: GET /TarotCard");
+      const response = await fetch(
+        "https://xi5k-kqun-rjxc.n7e.xano.io/api:bhawqcMo/TarotCard"
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("📡 API Response: TarotCard data received");
+      return data;
+    } catch (error: any) {
+      console.error("Get tarot cards error:", error);
+      throw new Error(error.message || "Failed to get tarot cards");
+    }
+  },
+
   async submitReading(readingData: {
     user: User;
     reading_mode: "single" | "three" | "celtic";
