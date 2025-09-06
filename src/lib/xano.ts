@@ -467,6 +467,17 @@ export const tarotService = {
     reading_timestamp: number;
   }): Promise<any> {
     try {
+      console.log("🌐 ===== API SUBMISSION =====");
+      console.log("📥 Received reading data:", {
+        selected_cards: readingData.selected_cards,
+        card_data: readingData.card_data.map((card) => ({
+          id: card.id,
+          name: card.name,
+        })),
+        reading_mode: readingData.reading_mode,
+        user_id: readingData.user.id,
+      });
+
       // Format the userPrompt with user data and card data
       const userPrompt = `Here is the user data and the drawn tarot card:
 
@@ -484,8 +495,20 @@ Explain what this card might mean for them right now and provide thoughtful advi
         userPrompt: userPrompt,
       };
 
+      console.log("📤 Sending payload to API:", {
+        userPrompt_length: userPrompt.length,
+        selected_cards_in_prompt: readingData.card_data.map((card) => ({
+          id: card.id,
+          name: card.name,
+        })),
+      });
+
       const response = await xano.post("/auth/tarot/read", payload);
       const responseBody = response.getBody();
+
+      console.log("✅ API Response received:", responseBody);
+      console.log("🌐 ===== END API SUBMISSION =====");
+
       return responseBody;
     } catch (error: any) {
       console.error("Submit reading error:", error);

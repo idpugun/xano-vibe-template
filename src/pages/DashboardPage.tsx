@@ -58,33 +58,12 @@ export const DashboardPage: React.FC = () => {
     return selectedCards.size === requiredCards;
   }, [readingMode, selectedCards.size]);
 
-  // Function to get selected card data from selectedCards
-  const getSelectedCardData = useCallback(() => {
-    // We need to recreate the displayCards mapping to find the actual card data
-    // This matches the logic in TarotCardSection
-    const displayCards = Array.from({ length: 60 }, (_, index) => {
-      const randomSeed = (shuffleTrigger * 1000) + index;
-      const cardIndex = (randomSeed + index) % tarotCards.length;
-      return {
-        id: index,
-        cardData: tarotCards[cardIndex]
-      };
-    });
 
-    return Array.from(selectedCards).map(cardId => {
-      const displayCard = displayCards.find(card => card.id === cardId);
-      return displayCard?.cardData;
-    }).filter(Boolean) as Array<{
-      id: number;
-      name: string;
-      fortune_telling: string[];
-      keyword: string[];
-      light_meaning: string[];
-      shadow_meaning: string[];
-      img_url: string;
-    }>;
-  }, [selectedCards, tarotCards, shuffleTrigger]);
-
+  // Handle shuffle request from TarotCardSection
+  const handleShuffle = useCallback(() => {
+    console.log('🔀 Parent: Shuffle requested');
+    setShuffleTrigger(prev => prev + 1);
+  }, []);
 
   // Handle reading submission
   const handleSubmitReading = useCallback(async () => {
@@ -93,8 +72,28 @@ export const DashboardPage: React.FC = () => {
     try {
       setIsSubmittingReading(true);
 
-      // Get selected card data
-      const cardData = getSelectedCardData();
+      // Get selected card data - recreate the mapping to match TarotCardSection
+      const displayCards = Array.from({ length: 60 }, (_, index) => {
+        const randomSeed = (shuffleTrigger * 1000) + index;
+        const cardIndex = (randomSeed + index) % tarotCards.length;
+        return {
+          id: index,
+          cardData: tarotCards[cardIndex]
+        };
+      });
+
+      const cardData = Array.from(selectedCards).map(cardId => {
+        const displayCard = displayCards.find(card => card.id === cardId);
+        return displayCard?.cardData;
+      }).filter(Boolean) as Array<{
+        id: number;
+        name: string;
+        fortune_telling: string[];
+        keyword: string[];
+        light_meaning: string[];
+        shadow_meaning: string[];
+        img_url: string;
+      }>;
       
       // Show modal immediately with loading state
       setReadingResult({
@@ -118,11 +117,32 @@ export const DashboardPage: React.FC = () => {
         reading_timestamp: Date.now()
       };
 
-      console.log('🔮 Submitting reading with data:', {
-        selectedCards: Array.from(selectedCards),
-        cardDataLength: cardData.length,
-        cardData: cardData.map(card => ({ id: card.id, name: card.name }))
+      console.log('🔮 ===== SUBMITTING TAROT READING =====');
+      console.log('📊 Selected Display Cards:', Array.from(selectedCards));
+      console.log('🗄️ Selected Database Cards:', cardData.map(card => ({ id: card.id, name: card.name })));
+      console.log('📈 Card Data Length:', cardData.length);
+      
+      console.log('🔄 Card ID Mapping Details:');
+      for (const displayId of selectedCards) {
+        const displayCard = Array.from({ length: 60 }, (_, index) => {
+          const randomSeed = (shuffleTrigger * 1000) + index;
+          const cardIndex = (randomSeed + index) % tarotCards.length;
+          return {
+            id: index,
+            cardData: tarotCards[cardIndex]
+          };
+        }).find(card => card.id === displayId);
+        
+        console.log(`  • Display ID ${displayId} → Database ID ${displayCard?.cardData?.id} (${displayCard?.cardData?.name})`);
+      }
+      
+      console.log('📤 Payload being sent to API:', {
+        selected_cards: Array.from(selectedCards),
+        card_data: cardData,
+        reading_mode: readingMode,
+        user_id: user.id
       });
+      console.log('🔮 ===== END SUBMISSION DATA =====');
 
       // Submit to API
       const result = await tarotService.submitReading(readingData);
@@ -150,7 +170,7 @@ export const DashboardPage: React.FC = () => {
     } finally {
       setIsSubmittingReading(false);
     }
-  }, [user, isSelectionValid, selectedCards, getSelectedCardData, readingMode]);
+  }, [user, isSelectionValid, selectedCards, readingMode, shuffleTrigger, tarotCards]);
 
   // Reset selected cards when reading mode changes
   const prevReadingMode = useRef<ReadingMode>(readingMode);
@@ -491,11 +511,12 @@ export const DashboardPage: React.FC = () => {
           onModeChange={setReadingMode}
         />
         
-        <TarotCardSection 
+          <TarotCardSection 
           readingMode={readingMode} 
           selectedCards={selectedCards}
           onSelectedCardsChange={setSelectedCards}
           shuffleTrigger={shuffleTrigger}
+          onShuffle={handleShuffle}
           cardsData={tarotCards}
           loading={cardsLoading}
           error={cardsError}
