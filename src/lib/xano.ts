@@ -498,42 +498,40 @@ export const tarotService = {
       }));
 
       // Format the userPrompt with filtered user data and card data
-      const userPrompt = `Here is the user data and the drawn tarot card:
+      const userPrompt = `นี่คือข้อมูลผู้ใช้และการ์ดทาโรต์ที่จับได้:
 
-User:
-- Name: ${filteredUser.name || "Not provided"}
-- Email: ${filteredUser.email}
-- Interests: ${
+ผู้ใช้:
+- ชื่อ: ${filteredUser.name || "ไม่ได้ระบุ"}
+- อีเมล: ${filteredUser.email}
+- ความสนใจ: ${
         filteredUser.interests
           ? filteredUser.interests.join(", ")
-          : "Not specified"
+          : "ไม่ได้ระบุ"
       }
-- Birth Place: ${filteredUser.birth_place || "Not provided"}
-- Birth Date: ${
+- สถานที่เกิด: ${filteredUser.birth_place || "ไม่ได้ระบุ"}
+- วันที่เกิด: ${
         filteredUser.birth_date
           ? new Date(filteredUser.birth_date).toLocaleDateString()
-          : "Not provided"
+          : "ไม่ได้ระบุ"
       }
 
-Drawn Card${filteredCardData.length > 1 ? "s" : ""}:
+การ์ดที่จับได้${filteredCardData.length > 1 ? " (หลายใบ)" : ""}:
 ${filteredCardData
   .map(
     (card, index) => `
 ${index + 1}. ${card.name}
-   Fortune Telling: ${card.fortune_telling.join("; ")}
-   Keywords: ${card.keyword.join(", ")}
-   Light Meaning: ${card.light_meaning.join("; ")}
-   Shadow Meaning: ${card.shadow_meaning.join("; ")}
+   การทำนาย: ${card.fortune_telling.join("; ")}
+   คำสำคัญ: ${card.keyword.join(", ")}
+   ความหมายด้านบวก: ${card.light_meaning.join("; ")}
+   ความหมายด้านลบ: ${card.shadow_meaning.join("; ")}
 `
   )
   .join("")}
 
-Please give a tarot reading for ${
-        filteredUser.name || "this person"
-      } using this information. 
-Explain what this card${
-        filteredCardData.length > 1 ? "s might mean" : " might mean"
-      } for them right now and provide thoughtful advice they can take away from the reading.`;
+กรุณาให้การอ่านทาโรต์สำหรับ ${filteredUser.name || "บุคคลนี้"} โดยใช้ข้อมูลนี้ 
+อธิบายว่าการ์ด${
+        filteredCardData.length > 1 ? "เหล่านี้" : "นี้"
+      } อาจมีความหมายอย่างไรสำหรับพวกเขาในตอนนี้ และให้คำแนะนำที่รอบคอบที่พวกเขาสามารถนำไปใช้ได้จากการอ่านนี้`;
 
       // Send the new payload structure to tarot/read endpoint
       const payload = {
