@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { realtimeService, authService, tarotService } from '@/lib/xano';
-import { LogOut, User, Activity, Database, Menu, X, Settings } from 'lucide-react';
+import { LogOut, User, Activity, Database, Menu, X, Settings, History } from 'lucide-react';
 import { TarotCardSection } from '@/components/TarotCardSection';
 import { BackToLanding } from '@/components/BackToLanding';
 import { ReadingModeSelector, type ReadingMode } from '@/components/ReadingModeSelector';
@@ -466,6 +466,14 @@ export const DashboardPage: React.FC = () => {
 
                     {/* Menu Items */}
                     <div className="py-2">
+                      <Link
+                        to="/history"
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-secondary/50 flex items-center space-x-2"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <History className="h-4 w-4" />
+                        <span>ประวัติการทำนาย</span>
+                      </Link>
                       <Link
                         to="/settings"
                         className="w-full text-left px-4 py-2 text-sm hover:bg-secondary/50 flex items-center space-x-2"

@@ -43,16 +43,22 @@ export const TarotReadingModal: React.FC<TarotReadingModalProps> = ({
       setIsVisible(true);
       // Prevent body scroll when modal is open
       document.body.style.overflow = 'hidden';
+      // Auto-select first card when modal opens
+      if (readingResult?.card_data?.length && readingResult.card_data.length > 0) {
+        setSelectedCard(readingResult.card_data[0].id);
+      }
     } else {
       setIsVisible(false);
       document.body.style.overflow = 'unset';
+      // Reset selected card when modal closes
+      setSelectedCard(null);
     }
 
     // Cleanup on unmount
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen]);
+  }, [isOpen, readingResult]);
 
   const formatTimestamp = (timestamp: number) => {
     return new Date(timestamp).toLocaleString('th-TH', {

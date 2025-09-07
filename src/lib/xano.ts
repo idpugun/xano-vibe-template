@@ -599,5 +599,58 @@ ${index + 1}. ${card.name}
   },
 };
 
+// Prediction notes service
+export const predictionNotesService = {
+  async getPredictionNotes(): Promise<any[]> {
+    try {
+      const response = await xano.get("/prediction_notes");
+      const responseBody = response.getBody();
+      return responseBody;
+    } catch (error: any) {
+      console.error("Get prediction notes error:", error);
+
+      // Handle Xano SDK errors properly
+      if (error.getResponse) {
+        const errorResponse = error.getResponse();
+        const errorBody = errorResponse.getBody();
+        console.error("Error response body:", errorBody);
+        console.error("Error status code:", errorResponse.getStatusCode());
+
+        // Throw a more user-friendly error message
+        throw new Error(
+          errorBody.message || error.message || "Failed to get prediction notes"
+        );
+      }
+
+      throw error;
+    }
+  },
+
+  async deletePredictionNote(noteId: number): Promise<void> {
+    try {
+      await xano.delete(`/prediction_notes/${noteId}`);
+    } catch (error: any) {
+      console.error("Delete prediction note error:", error);
+
+      // Handle Xano SDK errors properly
+      if (error.getResponse) {
+        const errorResponse = error.getResponse();
+        const errorBody = errorResponse.getBody();
+        console.error("Error response body:", errorBody);
+        console.error("Error status code:", errorResponse.getStatusCode());
+
+        // Throw a more user-friendly error message
+        throw new Error(
+          errorBody.message ||
+            error.message ||
+            "Failed to delete prediction note"
+        );
+      }
+
+      throw error;
+    }
+  },
+};
+
 // Export configuration for debugging
 export const xanoConfig = XANO_CONFIG;
